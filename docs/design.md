@@ -27,14 +27,25 @@
 
 ## 输入物
 
-一期建议输入参数：
+一期支持以下参数输入：
 
-1. `--bs-sql <path>`：BlessingSkin SQL dump
-2. `--bs-textures <path>`：BlessingSkin `textures/` 目录
+1. `--bs-sql <path>`：BlessingSkin SQL dump（默认：`./bs.sql`）
+2. `--bs-textures <path>`：BlessingSkin 材质目录（默认：`./storage/textures`，若不存在则跳过材质迁移）
 3. `--ha-callback-url <url>`：HRPAuth 回调基地址，用于生成 `textures.url`
-4. `--ha-private-key <path>`：HRPAuth Yggdrasil 私钥，用于给 `profile_properties.textures` 签名
-5. `--out-sql <path>`：输出 SQL
-6. `--out-report <path>`：输出报告
+4. `--ha-private-key <path>`：HRPAuth 私钥文件路径
+5. `--ha-private-key-content <content>`：HRPAuth 私钥 PEM 内容（支持直接粘贴）
+6. `--ha-baseline-sql <path>`：HRPAuth 数据库模板文件（默认：`./ha-baseline.sql`，由程序内嵌并自动释放）
+7. `--out-sql <path>`：输出 SQL 文件路径
+8. `--out-report <path>`：输出报告文件路径
+
+## 交互设计 (TUI)
+
+工具在缺失必要参数时会自动启动交互式界面 (TUI)：
+
+- **高对比度显示**：适配各种终端配色方案。
+- **自动路径探测**：自动扫描当前目录下的 `bs.sql`、材质目录和密钥文件，并优先提示用户确认。
+- **自动密钥生成**：若用户未提供密钥，工具默认推荐并生成一个新的 RSA 4096 位私钥并保存。
+- **内嵌资源释放**：程序内嵌了标准的 HA 数据库模板，运行时自动释放到当前目录，实现“零配置”启动。
 
 ## 输出物
 

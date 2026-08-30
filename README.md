@@ -5,14 +5,27 @@ See [docs/design.md](./docs/design.md) for the current migration design.
 
 ## Usage
 
+Simply run the tool in your Blessing-Skin-Server root directory:
+
 ```bash
-go run ./cmd/bs2ha convert \
+go build -o bs2ha ./cmd/bs2ha
+./bs2ha
+```
+
+The tool will automatically:
+- Release the HRPAuth baseline SQL template (`ha-baseline.sql`).
+- Detect your `bs.sql` and textures directory.
+- Guide you through the configuration via a TUI if any parameters are missing.
+- Auto-generate a new signing key if you don't provide one.
+
+For advanced CLI usage:
+
+```bash
+./bs2ha convert \
   --bs-sql ./bs.sql \
-  --bs-textures ./textures \
+  --bs-textures ./storage/textures \
   --ha-callback-url https://auth.example.com \
-  --ha-private-key ./private_key.pem \
-  --out-sql ./out/ha-import.sql \
-  --out-report ./out/ha-import-report.json
+  --out-sql ./ha-import.sql
 ```
 
 Notes:
