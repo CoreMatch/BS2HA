@@ -160,8 +160,10 @@ func Run(cfg Config, dump *bsdump.Dump) (*Result, error) {
 		texturesByID[tid] = row
 	}
 
-	if err := os.MkdirAll(cfg.HATexturesOutDir, 0o755); err != nil {
-		return nil, fmt.Errorf("create texture output directory: %w", err)
+	if cfg.BSTexturesDir != "" {
+		if err := os.MkdirAll(cfg.HATexturesOutDir, 0o755); err != nil {
+			return nil, fmt.Errorf("create texture output directory: %w", err)
+		}
 	}
 
 	report := Report{
@@ -359,7 +361,7 @@ func profileFromSelection(user userRecord, player bsdump.Row, placeholder bool) 
 }
 
 func buildTextureProperty(cfg Config, sign signer, user userRecord, profile profileRecord, player bsdump.Row, texturesByID map[int64]bsdump.Row) (*propertyRecord, []ReportIssue, error) {
-	if player == nil {
+	if player == nil || cfg.BSTexturesDir == "" {
 		return nil, nil, nil
 	}
 

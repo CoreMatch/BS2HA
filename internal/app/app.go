@@ -9,6 +9,7 @@ import (
 
 	"github.com/lnb/bs2ha/internal/bsdump"
 	"github.com/lnb/bs2ha/internal/convert"
+	"github.com/lnb/bs2ha/internal/tui"
 )
 
 func Run(args []string) error {
@@ -27,7 +28,7 @@ func Run(args []string) error {
 }
 
 func usageError() error {
-	return errors.New("usage: bs2ha convert --bs-sql <path> --bs-textures <path> --ha-callback-url <url> --out-sql <path> --out-report <path> [--ha-private-key <path>] [--ha-textures-out <path>] [--bs-username-column <name>] [--unsigned]")
+	return errors.New("usage: bs2ha convert --bs-sql <path> --ha-callback-url <url> --out-sql <path> --out-report <path> [--bs-textures <path>] [--ha-private-key <path>] [--ha-textures-out <path>] [--bs-username-column <name>] [--unsigned]")
 }
 
 func runConvert(args []string) error {
@@ -49,9 +50,19 @@ func runConvert(args []string) error {
 		return err
 	}
 
-	if cfg.BSSQLPath == "" || cfg.BSTexturesDir == "" || cfg.HACallbackURL == "" || cfg.OutSQLPath == "" || cfg.OutReportPath == "" {
-		return usageError()
+	// Check if any required parameters are missing
+	isMissingRequired := cfg.BSSQLPath == "" ||
+		cfg.HACallbackURL == "" ||
+		cfg.OutSQLPath == "" ||
+		cfg.OutReportPath == ""
+
+	if isMissingRequired {
+		fmt.Println("Missing required parameters. Launching TUI...")
+		if err := tui.FillConfig(&cfg); err != nil {
+			return fmt.Errorf("TUI error: %w", err)
+		}
 	}
+
 	if cfg.HATexturesOutDir == "" {
 		cfg.HATexturesOutDir = filepath.Join(filepath.Dir(cfg.OutSQLPath), "textures")
 	}
