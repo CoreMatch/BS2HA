@@ -14,8 +14,10 @@ import (
 
 func detectBSTextures() string {
 	paths := []string{
+		"storage/textures",
 		"storage/app/public/textures",
 		"textures",
+		"blessing-skin-server/storage/textures",
 		"blessing-skin-server/storage/app/public/textures",
 	}
 	for _, p := range paths {
@@ -147,8 +149,8 @@ func FillConfig(cfg *convert.Config) error {
 				huh.NewGroup(
 					huh.NewInput().
 						Title("BlessingSkin Textures Directory").
-						Description("Leave empty to skip texture migration.").
-						Placeholder("Leave empty to skip").
+						Description("Leave empty to skip texture migration (default: storage/textures).").
+						Placeholder("storage/textures").
 						Value(&bsTexturesDir).
 						Validate(func(s string) error {
 							if s != "" {
@@ -343,7 +345,13 @@ func FillConfig(cfg *convert.Config) error {
 		}
 	}
 
-	// Set defaults if still empty
+	if bsTexturesDir == "" {
+		bsTexturesDir = "storage/textures"
+		// If storage/textures doesn't exist, check other common paths or leave empty
+		if _, err := os.Stat(bsTexturesDir); os.IsNotExist(err) {
+			bsTexturesDir = ""
+		}
+	}
 	if haBaselineSQL == "" {
 		haBaselineSQL = "ha-baseline.sql"
 		// If ha-baseline.sql doesn't exist, we'll just not use a baseline

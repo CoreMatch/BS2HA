@@ -14,8 +14,12 @@ import (
 )
 
 func Run(args []string) error {
+	// Default to "convert" command if no arguments are provided
 	if len(args) == 0 {
-		return usageError()
+		if err := releaseBaselineSQL(); err != nil {
+			fmt.Printf("Warning: failed to release baseline SQL: %v\n", err)
+		}
+		return runConvert([]string{})
 	}
 
 	switch args[0] {
@@ -50,7 +54,7 @@ func runConvert(args []string) error {
 
 	cfg := convert.Config{}
 	fs.StringVar(&cfg.BSSQLPath, "bs-sql", "", "path to BlessingSkin SQL dump")
-	fs.StringVar(&cfg.BSTexturesDir, "bs-textures", "", "path to BlessingSkin textures directory")
+	fs.StringVar(&cfg.BSTexturesDir, "bs-textures", "storage/textures", "path to BlessingSkin textures directory")
 	fs.StringVar(&cfg.HACallbackURL, "ha-callback-url", "", "HRPAuth callback base URL")
 	fs.StringVar(&cfg.HAPrivateKeyPath, "ha-private-key", "", "path to HRPAuth Yggdrasil private key")
 	fs.StringVar(&cfg.HAPrivateKeyContent, "ha-private-key-content", "", "raw HRPAuth Yggdrasil private key PEM content")
@@ -84,6 +88,13 @@ func runConvert(args []string) error {
 	}
 	if cfg.BSUsernameColumn == "" {
 		cfg.BSUsernameColumn = "nickname"
+	}
+
+	// If using default textures dir, check if it exists
+	if cfg.BSTexturesDir == "storage/textures" {
+		if _, err := os.Stat(cfg.BSTexturesDir); os.IsNotExist(err) {
+			cfg.BSTexturesDir = ""
+		}
 	}
 
 	dump, err := bsdump.ParseFile(cfg.BSSQLPath)
