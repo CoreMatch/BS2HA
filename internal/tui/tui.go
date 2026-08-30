@@ -5,11 +5,48 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/charmbracelet/huh"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/lnb/bs2ha/internal/convert"
 )
+
+func detectBSTextures() string {
+	paths := []string{
+		"storage/app/public/textures",
+		"textures",
+		"blessing-skin-server/storage/app/public/textures",
+	}
+	for _, p := range paths {
+		abs, err := filepath.Abs(p)
+		if err != nil {
+			continue
+		}
+		if info, err := os.Stat(abs); err == nil && info.IsDir() {
+			return abs
+		}
+	}
+	return ""
+}
+
+func detectHAPrivateKey() string {
+	paths := []string{
+		"yggdrasil.key",
+		"private.key",
+		"blessing-skin-server/yggdrasil.key",
+	}
+	for _, p := range paths {
+		abs, err := filepath.Abs(p)
+		if err != nil {
+			continue
+		}
+		if info, err := os.Stat(abs); err == nil && !info.IsDir() {
+			return abs
+		}
+	}
+	return ""
+}
 
 // FillConfig fills the missing configuration values using a TUI.
 func FillConfig(cfg *convert.Config) error {
@@ -18,6 +55,7 @@ func FillConfig(cfg *convert.Config) error {
 		bsTexturesDir  = cfg.BSTexturesDir
 		haCallbackURL  = cfg.HACallbackURL
 		haPrivateKey   = cfg.HAPrivateKeyPath
+		haKeyContent   = cfg.HAPrivateKeyContent
 		outSQLPath     = cfg.OutSQLPath
 		outReportPath  = cfg.OutReportPath
 		haTexturesOut  = cfg.HATexturesOutDir
@@ -30,188 +68,252 @@ func FillConfig(cfg *convert.Config) error {
 		usernameColumn = "nickname"
 	}
 
-	var groups []*huh.Group
+	// Define a high-contrast theme
+	theme := huh.ThemeBase()
+	white := lipgloss.Color("15")
+	cyan := lipgloss.Color("6")
+	red := lipgloss.Color("9")
+	lightGray := lipgloss.Color("7")
 
-	// Group 1: Source Info
-	var group1Fields []huh.Field
-	group1Fields = append(group1Fields, huh.NewNote().
-		Title("BlessingSkin to HRPAuth Migration").
-		Description("Welcome to the migration tool. Please fill in the missing parameters."))
+	theme.Focused.Title = theme.Focused.Title.Foreground(cyan).Bold(true)
+	theme.Focused.Description = theme.Focused.Description.Foreground(lightGray)
+	theme.Focused.TextInput.Text = theme.Focused.TextInput.Text.Foreground(white)
+	theme.Focused.TextInput.Prompt = theme.Focused.TextInput.Prompt.Foreground(cyan)
+	theme.Focused.TextInput.Cursor = theme.Focused.TextInput.Cursor.Foreground(cyan)
+	theme.Focused.TextInput.Placeholder = theme.Focused.TextInput.Placeholder.Foreground(lightGray)
+	theme.Blurred.Title = theme.Blurred.Title.Foreground(lightGray)
+	theme.Blurred.Description = theme.Blurred.Description.Foreground(lightGray)
+	theme.Blurred.TextInput.Text = theme.Blurred.TextInput.Text.Foreground(lightGray)
+	theme.Blurred.TextInput.Prompt = theme.Blurred.TextInput.Prompt.Foreground(lightGray)
+	theme.Focused.ErrorMessage = theme.Focused.ErrorMessage.Foreground(red)
 
+	// 1. SQL Dump
 	if bsSQLPath == "" {
-		group1Fields = append(group1Fields, huh.NewInput().
-			Title("BlessingSkin SQL Dump Path").
-			Description("Path to the .sql file exported from BlessingSkin.").
-			Value(&bsSQLPath).
-			Validate(func(s string) error {
-				if s == "" {
-					return errors.New("SQL dump path is required")
-				}
-				if _, err := os.Stat(s); os.IsNotExist(err) {
-					return fmt.Errorf("file %s does not exist", s)
-				}
-				return nil
-			}))
-	}
-
-	if bsTexturesDir == "" {
-		group1Fields = append(group1Fields, huh.NewInput().
-			Title("BlessingSkin Textures Directory").
-			Description("Path to the directory containing texture files. Leave empty to skip texture migration.").
-			Placeholder("Leave empty to skip").
-			Value(&bsTexturesDir).
-			Validate(func(s string) error {
-				if s != "" {
-					if info, err := os.Stat(s); err != nil || !info.IsDir() {
-						return fmt.Errorf("directory %s does not exist or is not a directory", s)
-					}
-				}
-				return nil
-			}))
-	}
-
-	if haCallbackURL == "" {
-		group1Fields = append(group1Fields, huh.NewInput().
-			Title("HRPAuth Callback URL").
-			Description("The base URL for HRPAuth callback (e.g., https://auth.example.com).").
-			Value(&haCallbackURL).
-			Validate(func(s string) error {
-				if s == "" {
-					return errors.New("callback URL is required")
-				}
-				return nil
-			}))
-	}
-
-	if len(group1Fields) > 1 {
-		groups = append(groups, huh.NewGroup(group1Fields...))
-	}
-
-	// Group 2: Signing
-	var group2Fields []huh.Field
-	if !unsigned && haPrivateKey == "" {
-		group2Fields = append(group2Fields, huh.NewConfirm().
-			Title("Allow Unsigned Textures?").
-			Description("If you don't have the Yggdrasil private key yet, you can skip signing.").
-			Value(&unsigned))
-
-		group2Fields = append(group2Fields, huh.NewInput().
-			Title("HRPAuth Yggdrasil Private Key Path").
-			Description("Required for signing texture properties unless 'Unsigned' is enabled.").
-			Value(&haPrivateKey).
-			Validate(func(s string) error {
-				if !unsigned && s == "" {
-					return errors.New("private key is required unless unsigned is enabled")
-				}
-				if s != "" {
-					if _, err := os.Stat(s); os.IsNotExist(err) {
-						return fmt.Errorf("file %s does not exist", s)
-					}
-				}
-				return nil
-			}))
-	}
-
-	if len(group2Fields) > 0 {
-		groups = append(groups, huh.NewGroup(group2Fields...))
-	}
-
-	// Group 3: Output Info
-	var group3Fields []huh.Field
-	if outSQLPath == "" {
-		group3Fields = append(group3Fields, huh.NewInput().
-			Title("Output SQL Path").
-			Description("Where to save the generated HRPAuth SQL.").
-			Value(&outSQLPath).
-			Validate(func(s string) error {
-				if s == "" {
-					return errors.New("output SQL path is required")
-				}
-				return nil
-			}))
-	}
-
-	if outReportPath == "" {
-		group3Fields = append(group3Fields, huh.NewInput().
-			Title("Output Report Path").
-			Description("Where to save the migration report JSON.").
-			Value(&outReportPath).
-			Validate(func(s string) error {
-				if s == "" {
-					return errors.New("output report path is required")
-				}
-				return nil
-			}))
-	}
-
-	if haTexturesOut == "" {
-		group3Fields = append(group3Fields, huh.NewInput().
-			Title("Output Textures Directory").
-			Description("Where to copy the textures. Defaults to 'textures' in the same directory as output SQL.").
-			Placeholder("Leave empty for default").
-			Value(&haTexturesOut))
-	}
-
-	if cfg.BSUsernameColumn == "" {
-		group3Fields = append(group3Fields, huh.NewInput().
-			Title("BS Username Column").
-			Description("The column name in BS users table that stores the canonical username.").
-			Value(&usernameColumn).
-			Validate(func(s string) error {
-				if s == "" {
-					return errors.New("username column is required")
-				}
-				return nil
-			}))
-	}
-
-	if len(group3Fields) > 0 {
-		groups = append(groups, huh.NewGroup(group3Fields...))
-	}
-
-	if len(groups) > 0 {
-		// Define a high-contrast theme
-		theme := huh.ThemeBase()
-
-		// Use standard ANSI colors for maximum compatibility
-		white := lipgloss.Color("15")
-		cyan := lipgloss.Color("6")
-		red := lipgloss.Color("9")
-		lightGray := lipgloss.Color("7")
-
-		theme.Focused.Title = theme.Focused.Title.Foreground(cyan).Bold(true)
-		theme.Focused.Description = theme.Focused.Description.Foreground(lightGray)
-		theme.Focused.TextInput.Text = theme.Focused.TextInput.Text.Foreground(white)
-		theme.Focused.TextInput.Prompt = theme.Focused.TextInput.Prompt.Foreground(cyan)
-		theme.Focused.TextInput.Cursor = theme.Focused.TextInput.Cursor.Foreground(cyan)
-		theme.Focused.TextInput.Placeholder = theme.Focused.TextInput.Placeholder.Foreground(lightGray)
-
-		theme.Blurred.Title = theme.Blurred.Title.Foreground(lightGray)
-		theme.Blurred.Description = theme.Blurred.Description.Foreground(lightGray)
-		theme.Blurred.TextInput.Text = theme.Blurred.TextInput.Text.Foreground(lightGray)
-		theme.Blurred.TextInput.Prompt = theme.Blurred.TextInput.Prompt.Foreground(lightGray)
-
-		theme.Focused.ErrorMessage = theme.Focused.ErrorMessage.Foreground(red)
-
-		form := huh.NewForm(groups...).WithTheme(theme)
-		err := form.Run()
+		err := huh.NewForm(
+			huh.NewGroup(
+				huh.NewNote().
+					Title("BlessingSkin to HRPAuth Migration").
+					Description("Welcome to the migration tool. Please fill in the missing parameters."),
+				huh.NewInput().
+					Title("BlessingSkin SQL Dump Path").
+					Description("Path to the .sql file exported from BlessingSkin.").
+					Value(&bsSQLPath).
+					Validate(func(s string) error {
+						if s == "" {
+							return errors.New("required")
+						}
+						if _, err := os.Stat(s); os.IsNotExist(err) {
+							return fmt.Errorf("file %s not found", s)
+						}
+						return nil
+					}),
+			),
+		).WithTheme(theme).Run()
 		if err != nil {
 			return err
 		}
 	}
 
-	// Update config with values from TUI
+	// 2. Textures
+	if bsTexturesDir == "" {
+		detected := detectBSTextures()
+		useDetected := true
+		if detected != "" {
+			err := huh.NewForm(
+				huh.NewGroup(
+					huh.NewConfirm().
+						Title(fmt.Sprintf("Detected textures at: %s. Use it?", detected)).
+						Value(&useDetected),
+				),
+			).WithTheme(theme).Run()
+			if err != nil {
+				return err
+			}
+			if useDetected {
+				bsTexturesDir = detected
+			}
+		}
+
+		if !useDetected || detected == "" {
+			err := huh.NewForm(
+				huh.NewGroup(
+					huh.NewInput().
+						Title("BlessingSkin Textures Directory").
+						Description("Leave empty to skip texture migration.").
+						Placeholder("Leave empty to skip").
+						Value(&bsTexturesDir).
+						Validate(func(s string) error {
+							if s != "" {
+								if info, err := os.Stat(s); err != nil || !info.IsDir() {
+									return fmt.Errorf("invalid directory")
+								}
+							}
+							return nil
+						}),
+				),
+			).WithTheme(theme).Run()
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	// 3. HA URL
+	if haCallbackURL == "" {
+		err := huh.NewForm(
+			huh.NewGroup(
+				huh.NewInput().
+					Title("HRPAuth Callback URL").
+					Description("Base URL for HRPAuth (e.g., https://auth.example.com).").
+					Value(&haCallbackURL).
+					Validate(func(s string) error {
+						if s == "" {
+							return errors.New("required")
+						}
+						return nil
+					}),
+			),
+		).WithTheme(theme).Run()
+		if err != nil {
+			return err
+		}
+	}
+
+	// 4. Private Key
+	if !unsigned && haPrivateKey == "" && haKeyContent == "" {
+		detected := detectHAPrivateKey()
+		useDetected := true
+		if detected != "" {
+			err := huh.NewForm(
+				huh.NewGroup(
+					huh.NewConfirm().
+						Title(fmt.Sprintf("Detected private key at: %s. Use it?", detected)).
+						Value(&useDetected),
+				),
+			).WithTheme(theme).Run()
+			if err != nil {
+				return err
+			}
+			if useDetected {
+				haPrivateKey = detected
+			}
+		}
+
+		if !useDetected || detected == "" {
+			err := huh.NewForm(
+				huh.NewGroup(
+					huh.NewConfirm().Title("Allow Unsigned Textures?").Value(&unsigned),
+				),
+			).WithTheme(theme).Run()
+			if err != nil {
+				return err
+			}
+
+			if !unsigned {
+				mode := "path"
+				err := huh.NewForm(
+					huh.NewGroup(
+						huh.NewSelect[string]().
+							Title("Private Key Input Method").
+							Options(
+								huh.NewOption("File Path", "path"),
+								huh.NewOption("Paste Content", "content"),
+							).
+							Value(&mode),
+					),
+				).WithTheme(theme).Run()
+				if err != nil {
+					return err
+				}
+
+				if mode == "path" {
+					err := huh.NewForm(
+						huh.NewGroup(
+							huh.NewInput().
+								Title("Private Key File Path").
+								Value(&haPrivateKey).
+								Validate(func(s string) error {
+									if s == "" {
+										return errors.New("required")
+									}
+									if _, err := os.Stat(s); os.IsNotExist(err) {
+										return fmt.Errorf("not found")
+									}
+									return nil
+								}),
+						),
+					).WithTheme(theme).Run()
+					if err != nil {
+						return err
+					}
+				} else {
+					err := huh.NewForm(
+						huh.NewGroup(
+							huh.NewText().
+								Title("Private Key Content").
+								Description("Paste your PEM private key content here (Ctrl+D to finish).").
+								Value(&haKeyContent).
+								Validate(func(s string) error {
+									if s == "" {
+										return errors.New("required")
+									}
+									if !strings.Contains(s, "BEGIN") {
+										return errors.New("invalid PEM")
+									}
+									return nil
+								}),
+						),
+					).WithTheme(theme).Run()
+					if err != nil {
+						return err
+					}
+				}
+			}
+		}
+	}
+
+	// 5. Outputs
+	if outSQLPath == "" || outReportPath == "" {
+		err := huh.NewForm(
+			huh.NewGroup(
+				huh.NewInput().Title("Output SQL Path").Value(&outSQLPath).Validate(func(s string) error {
+					if s == "" {
+						return errors.New("required")
+					}
+					return nil
+				}),
+				huh.NewInput().Title("Output Report Path").Value(&outReportPath).Validate(func(s string) error {
+					if s == "" {
+						return errors.New("required")
+					}
+					return nil
+				}),
+				huh.NewInput().Title("Output Textures Directory").Placeholder("Default: textures/").Value(&haTexturesOut),
+				huh.NewInput().Title("BS Username Column").Value(&usernameColumn).Validate(func(s string) error {
+					if s == "" {
+						return errors.New("required")
+					}
+					return nil
+				}),
+			),
+		).WithTheme(theme).Run()
+		if err != nil {
+			return err
+		}
+	}
+
+	// Update config
 	cfg.BSSQLPath = bsSQLPath
 	cfg.BSTexturesDir = bsTexturesDir
 	cfg.HACallbackURL = haCallbackURL
 	cfg.HAPrivateKeyPath = haPrivateKey
+	cfg.HAPrivateKeyContent = haKeyContent
 	cfg.OutSQLPath = outSQLPath
 	cfg.OutReportPath = outReportPath
 	cfg.HATexturesOutDir = haTexturesOut
 	cfg.BSUsernameColumn = usernameColumn
 	cfg.AllowUnsignedTextures = unsigned
 
-	// Apply defaults if still empty
 	if cfg.HATexturesOutDir == "" {
 		cfg.HATexturesOutDir = filepath.Join(filepath.Dir(cfg.OutSQLPath), "textures")
 	}

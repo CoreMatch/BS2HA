@@ -29,6 +29,7 @@ type Config struct {
 	BSTexturesDir         string
 	HACallbackURL         string
 	HAPrivateKeyPath      string
+	HAPrivateKeyContent   string
 	OutSQLPath            string
 	OutReportPath         string
 	HATexturesOutDir      string
@@ -132,7 +133,7 @@ func Run(cfg Config, dump *bsdump.Dump) (*Result, error) {
 		return nil, err
 	}
 
-	sign, err := loadSigner(cfg.HAPrivateKeyPath, cfg.AllowUnsignedTextures)
+	sign, err := loadSigner(cfg.HAPrivateKeyPath, cfg.HAPrivateKeyContent, cfg.AllowUnsignedTextures)
 	if err != nil {
 		return nil, err
 	}
@@ -469,17 +470,23 @@ func materializeTexture(cfg Config, tex bsdump.Row, isSkin bool) (string, *textu
 	return hash, info, nil, nil
 }
 
-func loadSigner(path string, allowUnsigned bool) (signer, error) {
-	if path == "" {
+func loadSigner(path string, content string, allowUnsigned bool) (signer, error) {
+	if path == "" && content == "" {
 		if allowUnsigned {
 			return signer{}, nil
 		}
-		return signer{}, fmt.Errorf("missing --ha-private-key; pass --unsigned to allow unsigned texture properties")
+		return signer{}, fmt.Errorf("missing --ha-private-key or key content; pass --unsigned to allow unsigned texture properties")
 	}
 
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return signer{}, fmt.Errorf("read HA private key: %w", err)
+	var data []byte
+	var err error
+	if content != "" {
+		data = []byte(content)
+	} else {
+		data, err = os.ReadFile(path)
+		if err != nil {
+			return signer{}, fmt.Errorf("read HA private key: %w", err)
+		}
 	}
 	block, _ := pem.Decode(data)
 	if block == nil {
