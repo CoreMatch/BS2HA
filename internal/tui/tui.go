@@ -96,11 +96,12 @@ func FillConfig(cfg *convert.Config) error {
 					Description("Welcome to the migration tool. Please fill in the missing parameters."),
 				huh.NewInput().
 					Title("BlessingSkin SQL Dump Path").
-					Description("Path to the .sql file exported from BlessingSkin.").
+					Description("Path to the .sql file. Leave empty for default (bs.sql).").
+					Placeholder("bs.sql").
 					Value(&bsSQLPath).
 					Validate(func(s string) error {
 						if s == "" {
-							return errors.New("required")
+							return nil // Fallback handled below
 						}
 						if _, err := os.Stat(s); os.IsNotExist(err) {
 							return fmt.Errorf("file %s not found", s)
@@ -111,6 +112,12 @@ func FillConfig(cfg *convert.Config) error {
 		).WithTheme(theme).Run()
 		if err != nil {
 			return err
+		}
+		if bsSQLPath == "" {
+			bsSQLPath = "bs.sql"
+			if _, err := os.Stat(bsSQLPath); os.IsNotExist(err) {
+				return fmt.Errorf("default SQL dump %s not found", bsSQLPath)
+			}
 		}
 	}
 
@@ -231,13 +238,15 @@ func FillConfig(cfg *convert.Config) error {
 						huh.NewGroup(
 							huh.NewInput().
 								Title("Private Key File Path").
+								Description("Leave empty for default (yggdrasil.key).").
+								Placeholder("yggdrasil.key").
 								Value(&haPrivateKey).
 								Validate(func(s string) error {
 									if s == "" {
-										return errors.New("required")
+										return nil // Fallback handled below
 									}
 									if _, err := os.Stat(s); os.IsNotExist(err) {
-										return fmt.Errorf("not found")
+										return fmt.Errorf("file %s not found", s)
 									}
 									return nil
 								}),
@@ -245,6 +254,13 @@ func FillConfig(cfg *convert.Config) error {
 					).WithTheme(theme).Run()
 					if err != nil {
 						return err
+					}
+					if haPrivateKey == "" {
+						haPrivateKey = "yggdrasil.key"
+						// Last check for default
+						if _, err := os.Stat(haPrivateKey); os.IsNotExist(err) {
+							return fmt.Errorf("default private key %s not found", haPrivateKey)
+						}
 					}
 				} else {
 					err := huh.NewForm(
@@ -276,30 +292,44 @@ func FillConfig(cfg *convert.Config) error {
 	if outSQLPath == "" || outReportPath == "" {
 		err := huh.NewForm(
 			huh.NewGroup(
-				huh.NewInput().Title("Output SQL Path").Value(&outSQLPath).Validate(func(s string) error {
-					if s == "" {
-						return errors.New("required")
-					}
-					return nil
-				}),
-				huh.NewInput().Title("Output Report Path").Value(&outReportPath).Validate(func(s string) error {
-					if s == "" {
-						return errors.New("required")
-					}
-					return nil
-				}),
-				huh.NewInput().Title("Output Textures Directory").Placeholder("Default: textures/").Value(&haTexturesOut),
-				huh.NewInput().Title("BS Username Column").Value(&usernameColumn).Validate(func(s string) error {
-					if s == "" {
-						return errors.New("required")
-					}
-					return nil
-				}),
+				huh.NewInput().
+					Title("Output SQL Path").
+					Placeholder("ha-import.sql").
+					Value(&outSQLPath),
+				huh.NewInput().
+					Title("Output Report Path").
+					Placeholder("ha-import-report.json").
+					Value(&outReportPath),
+				huh.NewInput().
+					Title("Output Textures Directory").
+					Placeholder("Default: textures/").
+					Value(&haTexturesOut),
+				huh.NewInput().
+					Title("BS Username Column").
+					Placeholder("nickname").
+					Value(&usernameColumn).
+					Validate(func(s string) error {
+						if s == "" {
+							return nil
+						} // Use default nickname
+						return nil
+					}),
 			),
 		).WithTheme(theme).Run()
 		if err != nil {
 			return err
 		}
+	}
+
+	// Set defaults if still empty
+	if outSQLPath == "" {
+		outSQLPath = "ha-import.sql"
+	}
+	if outReportPath == "" {
+		outReportPath = "ha-import-report.json"
+	}
+	if usernameColumn == "" {
+		usernameColumn = "nickname"
 	}
 
 	// Update config
