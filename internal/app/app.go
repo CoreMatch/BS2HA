@@ -42,7 +42,7 @@ func runConvert(args []string) error {
 	fs.StringVar(&cfg.OutSQLPath, "out-sql", "", "path to generated HRPAuth SQL file")
 	fs.StringVar(&cfg.OutReportPath, "out-report", "", "path to generated migration report JSON")
 	fs.StringVar(&cfg.HATexturesOutDir, "ha-textures-out", "", "path to copied HRPAuth textures output directory")
-	fs.StringVar(&cfg.BSUsernameColumn, "bs-username-column", "username", "BlessingSkin username column name in users table")
+	fs.StringVar(&cfg.BSUsernameColumn, "bs-username-column", "nickname", "BlessingSkin canonical username column name in users table")
 	fs.BoolVar(&cfg.AllowUnsignedTextures, "unsigned", false, "allow unsigned texture properties when no private key is provided")
 
 	if err := fs.Parse(args); err != nil {
@@ -56,7 +56,7 @@ func runConvert(args []string) error {
 		cfg.HATexturesOutDir = filepath.Join(filepath.Dir(cfg.OutSQLPath), "textures")
 	}
 	if cfg.BSUsernameColumn == "" {
-		cfg.BSUsernameColumn = "username"
+		cfg.BSUsernameColumn = "nickname"
 	}
 
 	dump, err := bsdump.ParseFile(cfg.BSSQLPath)

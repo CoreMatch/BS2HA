@@ -94,6 +94,8 @@ HA 新生成：
 
 `HA.users.username` 直接继承 BS 用户名。
 
+针对当前支持的 BlessingSkin SQL dump 结构，这个值来自 `users.nickname`。
+
 这里不再做：
 
 - `nickname` 推导
@@ -102,7 +104,7 @@ HA 新生成：
 
 实现要求：
 
-1. 迁移器必须从 BS 输入中读取该用户的规范用户名
+1. 迁移器必须从 BS 输入中读取该用户的规范用户名；当前 dump 结构默认读取 `users.nickname`
 2. 该值直接写入 HA `users.username`
 3. 如果该用户缺失可恢复的 BS 用户名，该用户行应记入报告并按失败处理，而不是自动造名
 

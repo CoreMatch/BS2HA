@@ -4,6 +4,8 @@ import "testing"
 
 func TestParseCreateAndInsert(t *testing.T) {
 	sql := `
+-- phpMyAdmin SQL Dump
+/* leading comment */
 CREATE TABLE ` + "`users`" + ` (
   ` + "`uid`" + ` int NOT NULL,
   ` + "`username`" + ` varchar(255) DEFAULT NULL,

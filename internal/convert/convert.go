@@ -555,7 +555,35 @@ func detectPasswordMethod(dump *bsdump.Dump) (string, error) {
 		}
 	}
 
-	return "", fmt.Errorf("could not determine BlessingSkin password method from SQL input")
+	users := dump.Tables["users"]
+	if len(users) == 0 {
+		return "", fmt.Errorf("could not determine BlessingSkin password method from SQL input")
+	}
+
+	seenPassword := false
+	allBcrypt := true
+	for _, row := range users {
+		password, ok := row.Get("password")
+		if !ok || strings.TrimSpace(password) == "" {
+			continue
+		}
+		seenPassword = true
+		if !looksLikeBcrypt(password) {
+			allBcrypt = false
+			break
+		}
+	}
+
+	if seenPassword && allBcrypt {
+		return "BCRYPT", nil
+	}
+
+	return "NON_BCRYPT_OR_MIXED", nil
+}
+
+func looksLikeBcrypt(password string) bool {
+	password = strings.TrimSpace(password)
+	return strings.HasPrefix(password, "$2y$") || strings.HasPrefix(password, "$2b$") || strings.HasPrefix(password, "$2a$")
 }
 
 func renderSQL(users []userRecord, profiles []profileRecord, props []propertyRecord) (string, error) {

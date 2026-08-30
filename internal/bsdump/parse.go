@@ -44,6 +44,7 @@ func Parse(sql string) (*Dump, error) {
 	statements := splitStatements(sql)
 	for _, stmt := range statements {
 		trimmed := strings.TrimSpace(stmt)
+		trimmed = stripLeadingComments(trimmed)
 		trimmed = strings.TrimSuffix(trimmed, ";")
 		if trimmed == "" {
 			continue
@@ -108,6 +109,29 @@ func splitStatements(sql string) []string {
 		out = append(out, current.String())
 	}
 	return out
+}
+
+func stripLeadingComments(stmt string) string {
+	for {
+		trimmed := strings.TrimSpace(stmt)
+		switch {
+		case strings.HasPrefix(trimmed, "--"):
+			if idx := strings.Index(trimmed, "\n"); idx >= 0 {
+				stmt = trimmed[idx+1:]
+				continue
+			}
+			return ""
+		case strings.HasPrefix(trimmed, "/*"):
+			end := strings.Index(trimmed, "*/")
+			if end >= 0 {
+				stmt = trimmed[end+2:]
+				continue
+			}
+			return ""
+		default:
+			return trimmed
+		}
+	}
 }
 
 var createTablePattern = regexp.MustCompile("(?is)^CREATE\\s+TABLE\\s+(?:IF\\s+NOT\\s+EXISTS\\s+)?`?([a-zA-Z0-9_]+)`?\\s*\\((.*)\\)\\s*(?:ENGINE|DEFAULT|CHARSET|COLLATE|COMMENT|ROW_FORMAT|$).*")
