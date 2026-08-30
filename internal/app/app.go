@@ -41,6 +41,7 @@ func runConvert(args []string) error {
 	fs.StringVar(&cfg.HACallbackURL, "ha-callback-url", "", "HRPAuth callback base URL")
 	fs.StringVar(&cfg.HAPrivateKeyPath, "ha-private-key", "", "path to HRPAuth Yggdrasil private key")
 	fs.StringVar(&cfg.HAPrivateKeyContent, "ha-private-key-content", "", "raw HRPAuth Yggdrasil private key PEM content")
+	fs.StringVar(&cfg.GeneratedKeyPath, "ha-gen-key-path", "hrpauth-generated.key", "where to save the auto-generated key")
 	fs.StringVar(&cfg.OutSQLPath, "out-sql", "", "path to generated HRPAuth SQL file")
 	fs.StringVar(&cfg.OutReportPath, "out-report", "", "path to generated migration report JSON")
 	fs.StringVar(&cfg.HATexturesOutDir, "ha-textures-out", "", "path to copied HRPAuth textures output directory")

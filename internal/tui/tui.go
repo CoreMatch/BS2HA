@@ -190,6 +190,8 @@ func FillConfig(cfg *convert.Config) error {
 	if !unsigned && haPrivateKey == "" && haKeyContent == "" {
 		detected := detectHAPrivateKey()
 		useDetected := true
+
+		// Priority 1: Detected existing key
 		if detected != "" {
 			err := huh.NewForm(
 				huh.NewGroup(
@@ -206,22 +208,35 @@ func FillConfig(cfg *convert.Config) error {
 			}
 		}
 
+		// Priority 2: Not using detected, ask if generate or manual
 		if !useDetected || detected == "" {
+			keyOption := "generate"
 			err := huh.NewForm(
 				huh.NewGroup(
-					huh.NewConfirm().Title("Allow Unsigned Textures?").Value(&unsigned),
+					huh.NewSelect[string]().
+						Title("HRPAuth Private Key").
+						Description("A key is required to sign textures for HRPAuth.").
+						Options(
+							huh.NewOption("Auto-generate New Key (Recommended)", "generate"),
+							huh.NewOption("Provide Manually (File Path or Paste)", "manual"),
+							huh.NewOption("Skip Signing (Unsigned)", "unsigned"),
+						).
+						Value(&keyOption),
 				),
 			).WithTheme(theme).Run()
 			if err != nil {
 				return err
 			}
 
-			if !unsigned {
+			switch keyOption {
+			case "unsigned":
+				unsigned = true
+			case "manual":
 				mode := "path"
 				err := huh.NewForm(
 					huh.NewGroup(
 						huh.NewSelect[string]().
-							Title("Private Key Input Method").
+							Title("Input Method").
 							Options(
 								huh.NewOption("File Path", "path"),
 								huh.NewOption("Paste Content", "content"),
@@ -238,15 +253,14 @@ func FillConfig(cfg *convert.Config) error {
 						huh.NewGroup(
 							huh.NewInput().
 								Title("Private Key File Path").
-								Description("Leave empty for default (yggdrasil.key).").
 								Placeholder("yggdrasil.key").
 								Value(&haPrivateKey).
 								Validate(func(s string) error {
 									if s == "" {
-										return nil // Fallback handled below
+										return nil
 									}
 									if _, err := os.Stat(s); os.IsNotExist(err) {
-										return fmt.Errorf("file %s not found", s)
+										return fmt.Errorf("not found")
 									}
 									return nil
 								}),
@@ -255,19 +269,12 @@ func FillConfig(cfg *convert.Config) error {
 					if err != nil {
 						return err
 					}
-					if haPrivateKey == "" {
-						haPrivateKey = "yggdrasil.key"
-						// Last check for default
-						if _, err := os.Stat(haPrivateKey); os.IsNotExist(err) {
-							return fmt.Errorf("default private key %s not found", haPrivateKey)
-						}
-					}
 				} else {
 					err := huh.NewForm(
 						huh.NewGroup(
 							huh.NewText().
 								Title("Private Key Content").
-								Description("Paste your PEM private key content here (Ctrl+D to finish).").
+								Description("Paste PEM content (Ctrl+D to finish).").
 								Value(&haKeyContent).
 								Validate(func(s string) error {
 									if s == "" {

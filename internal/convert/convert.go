@@ -2,6 +2,7 @@ package convert
 
 import (
 	"crypto"
+	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha1"
 	"crypto/sha256"
@@ -30,6 +31,7 @@ type Config struct {
 	HACallbackURL         string
 	HAPrivateKeyPath      string
 	HAPrivateKeyContent   string
+	GeneratedKeyPath      string // Where to save the generated key
 	OutSQLPath            string
 	OutReportPath         string
 	HATexturesOutDir      string
@@ -133,7 +135,7 @@ func Run(cfg Config, dump *bsdump.Dump) (*Result, error) {
 		return nil, err
 	}
 
-	sign, err := loadSigner(cfg.HAPrivateKeyPath, cfg.HAPrivateKeyContent, cfg.AllowUnsignedTextures)
+	sign, err := loadSigner(cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -470,32 +472,61 @@ func materializeTexture(cfg Config, tex bsdump.Row, isSkin bool) (string, *textu
 	return hash, info, nil, nil
 }
 
-func loadSigner(path string, content string, allowUnsigned bool) (signer, error) {
-	if path == "" && content == "" {
-		if allowUnsigned {
+func loadSigner(cfg Config) (signer, error) {
+	if cfg.HAPrivateKeyPath == "" && cfg.HAPrivateKeyContent == "" {
+		if cfg.AllowUnsignedTextures {
 			return signer{}, nil
 		}
-		return signer{}, fmt.Errorf("missing --ha-private-key or key content; pass --unsigned to allow unsigned texture properties")
+		// Auto-generate if not provided and not explicitly unsigned
+		return generateAndSaveKey(cfg.GeneratedKeyPath)
 	}
 
 	var data []byte
 	var err error
-	if content != "" {
-		data = []byte(content)
+	if cfg.HAPrivateKeyContent != "" {
+		data = []byte(cfg.HAPrivateKeyContent)
 	} else {
-		data, err = os.ReadFile(path)
+		data, err = os.ReadFile(cfg.HAPrivateKeyPath)
 		if err != nil {
 			return signer{}, fmt.Errorf("read HA private key: %w", err)
 		}
 	}
+	return parseKey(data)
+}
+
+func parseKey(data []byte) (signer, error) {
 	block, _ := pem.Decode(data)
 	if block == nil {
-		return signer{}, fmt.Errorf("decode HA private key PEM")
+		return signer{}, fmt.Errorf("failed to parse PEM block")
 	}
 	key, err := x509.ParsePKCS1PrivateKey(block.Bytes)
 	if err != nil {
-		return signer{}, fmt.Errorf("parse HA private key: %w", err)
+		return signer{}, fmt.Errorf("parse RSA private key: %w", err)
 	}
+	return signer{key: key}, nil
+}
+
+func generateAndSaveKey(path string) (signer, error) {
+	if path == "" {
+		path = "hrpauth-generated.key"
+	}
+	key, err := rsa.GenerateKey(rand.Reader, 4096)
+	if err != nil {
+		return signer{}, fmt.Errorf("generate RSA key: %w", err)
+	}
+
+	data := pem.EncodeToMemory(&pem.Block{
+		Type:  "RSA PRIVATE KEY",
+		Bytes: x509.MarshalPKCS1PrivateKey(key),
+	})
+
+	if err := os.WriteFile(path, data, 0600); err != nil {
+		return signer{}, fmt.Errorf("save generated key: %w", err)
+	}
+
+	fmt.Printf("\n[INFO] Generated new HRPAuth private key and saved to: %s\n", path)
+	fmt.Println("[IMPORTANT] Please keep this key safe and configure it in your HRPAuth server.")
+
 	return signer{key: key}, nil
 }
 
