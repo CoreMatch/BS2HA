@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/lnb/bs2ha/internal/assets"
 	"github.com/lnb/bs2ha/internal/bsdump"
 	"github.com/lnb/bs2ha/internal/convert"
 	"github.com/lnb/bs2ha/internal/tui"
@@ -19,6 +20,10 @@ func Run(args []string) error {
 
 	switch args[0] {
 	case "convert":
+		// Release baseline SQL early
+		if err := releaseBaselineSQL(); err != nil {
+			fmt.Printf("Warning: failed to release baseline SQL: %v\n", err)
+		}
 		return runConvert(args[1:])
 	case "-h", "--help", "help":
 		return usageError()
@@ -31,6 +36,14 @@ func usageError() error {
 	return errors.New("usage: bs2ha convert --bs-sql <path> --ha-callback-url <url> --out-sql <path> --out-report <path> [--bs-textures <path>] [--ha-private-key <path>] [--ha-private-key-content <pem>] [--ha-textures-out <path>] [--bs-username-column <name>] [--unsigned]")
 }
 
+func releaseBaselineSQL() error {
+	const filename = "ha-baseline.sql"
+	if _, err := os.Stat(filename); err == nil {
+		return nil // Already exists
+	}
+	return os.WriteFile(filename, assets.HABaselineSQL, 0644)
+}
+
 func runConvert(args []string) error {
 	fs := flag.NewFlagSet("convert", flag.ContinueOnError)
 	fs.SetOutput(os.Stderr)
@@ -41,6 +54,7 @@ func runConvert(args []string) error {
 	fs.StringVar(&cfg.HACallbackURL, "ha-callback-url", "", "HRPAuth callback base URL")
 	fs.StringVar(&cfg.HAPrivateKeyPath, "ha-private-key", "", "path to HRPAuth Yggdrasil private key")
 	fs.StringVar(&cfg.HAPrivateKeyContent, "ha-private-key-content", "", "raw HRPAuth Yggdrasil private key PEM content")
+	fs.StringVar(&cfg.HABaselineSQLPath, "ha-baseline-sql", "", "path to HRPAuth baseline SQL template")
 	fs.StringVar(&cfg.GeneratedKeyPath, "ha-gen-key-path", "hrpauth-generated.key", "where to save the auto-generated key")
 	fs.StringVar(&cfg.OutSQLPath, "out-sql", "", "path to generated HRPAuth SQL file")
 	fs.StringVar(&cfg.OutReportPath, "out-report", "", "path to generated migration report JSON")

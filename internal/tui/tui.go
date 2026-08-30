@@ -56,6 +56,7 @@ func FillConfig(cfg *convert.Config) error {
 		haCallbackURL  = cfg.HACallbackURL
 		haPrivateKey   = cfg.HAPrivateKeyPath
 		haKeyContent   = cfg.HAPrivateKeyContent
+		haBaselineSQL  = cfg.HABaselineSQLPath
 		outSQLPath     = cfg.OutSQLPath
 		outReportPath  = cfg.OutReportPath
 		haTexturesOut  = cfg.HATexturesOutDir
@@ -300,6 +301,20 @@ func FillConfig(cfg *convert.Config) error {
 		err := huh.NewForm(
 			huh.NewGroup(
 				huh.NewInput().
+					Title("HRPAuth Baseline SQL").
+					Description("Leave empty for default (ha-baseline.sql).").
+					Placeholder("ha-baseline.sql").
+					Value(&haBaselineSQL).
+					Validate(func(s string) error {
+						if s == "" {
+							return nil
+						}
+						if _, err := os.Stat(s); os.IsNotExist(err) {
+							return fmt.Errorf("file %s not found", s)
+						}
+						return nil
+					}),
+				huh.NewInput().
 					Title("Output SQL Path").
 					Placeholder("ha-import.sql").
 					Value(&outSQLPath),
@@ -329,6 +344,13 @@ func FillConfig(cfg *convert.Config) error {
 	}
 
 	// Set defaults if still empty
+	if haBaselineSQL == "" {
+		haBaselineSQL = "ha-baseline.sql"
+		// If ha-baseline.sql doesn't exist, we'll just not use a baseline
+		if _, err := os.Stat(haBaselineSQL); os.IsNotExist(err) {
+			haBaselineSQL = ""
+		}
+	}
 	if outSQLPath == "" {
 		outSQLPath = "ha-import.sql"
 	}
@@ -345,6 +367,7 @@ func FillConfig(cfg *convert.Config) error {
 	cfg.HACallbackURL = haCallbackURL
 	cfg.HAPrivateKeyPath = haPrivateKey
 	cfg.HAPrivateKeyContent = haKeyContent
+	cfg.HABaselineSQLPath = haBaselineSQL
 	cfg.OutSQLPath = outSQLPath
 	cfg.OutReportPath = outReportPath
 	cfg.HATexturesOutDir = haTexturesOut
