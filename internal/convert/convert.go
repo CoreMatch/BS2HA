@@ -33,7 +33,9 @@ type Config struct {
 	HAPrivateKeyContent   string
 	GeneratedKeyPath      string // Where to save the generated key
 	HABaselineSQLPath     string // Path to the baseline HA SQL file
-	OutSQLPath            string
+	YGGBaselineSQLPath    string // Path to the baseline Ygg SQL file
+	HAOutSQLPath          string
+	YGGOutSQLPath         string
 	OutReportPath         string
 	HATexturesOutDir      string
 	BSUsernameColumn      string
@@ -41,7 +43,8 @@ type Config struct {
 }
 
 type Result struct {
-	SQL        string
+	HASQL      string
+	YGGSQL     string
 	ReportJSON []byte
 }
 
@@ -84,11 +87,20 @@ type userRecord struct {
 
 type profileRecord struct {
 	ID        string
-	UserID    string
+	AccountID uint64
 	Name      string
 	Model     string
 	CreatedAt string
 	UpdatedAt string
+}
+
+type accountRecord struct {
+	ID         uint64
+	CoreUserID string
+	Password   string
+	LastSignAt string
+	CreatedAt  string
+	UpdatedAt  string
 }
 
 type propertyRecord struct {
@@ -96,6 +108,7 @@ type propertyRecord struct {
 	Name       string
 	Value      string
 	Signature  string
+	DeleteWhen int64
 	Unsigned   bool
 	SourceHash []string
 }
@@ -175,6 +188,7 @@ func Run(cfg Config, dump *bsdump.Dump) (*Result, error) {
 	}
 
 	var users []userRecord
+	var accounts []accountRecord
 	var profiles []profileRecord
 	var props []propertyRecord
 	usedProfileNames := map[string]string{}
@@ -234,6 +248,7 @@ func Run(cfg Config, dump *bsdump.Dump) (*Result, error) {
 		report.Warnings = append(report.Warnings, warningIssues...)
 
 		users = append(users, user)
+		accounts = append(accounts, accountFromUser(user))
 		profiles = append(profiles, profile)
 		if prop != nil {
 			props = append(props, *prop)
@@ -247,7 +262,11 @@ func Run(cfg Config, dump *bsdump.Dump) (*Result, error) {
 	report.ImportedUsers = len(users)
 	report.ImportedProfiles = len(profiles)
 
-	sqlText, err := renderSQL(cfg.HABaselineSQLPath, users, profiles, props)
+	haSQL, err := renderHASQL(cfg.HABaselineSQLPath, users)
+	if err != nil {
+		return nil, err
+	}
+	yggSQL, err := renderYGGSQL(cfg.YGGBaselineSQLPath, accounts, profiles, props)
 	if err != nil {
 		return nil, err
 	}
@@ -256,7 +275,7 @@ func Run(cfg Config, dump *bsdump.Dump) (*Result, error) {
 		return nil, fmt.Errorf("marshal report: %w", err)
 	}
 
-	return &Result{SQL: sqlText, ReportJSON: reportJSON}, nil
+	return &Result{HASQL: haSQL, YGGSQL: yggSQL, ReportJSON: reportJSON}, nil
 }
 
 func mapUser(row bsdump.Row, usernameColumn string, passwordMethod string, report *Report) (userRecord, bool) {
@@ -356,11 +375,31 @@ func profileFromSelection(user userRecord, player bsdump.Row, placeholder bool) 
 
 	return profileRecord{
 		ID:        deriveID("profile", strconv.FormatUint(user.UID, 10), name),
-		UserID:    user.UUID,
+		AccountID: user.UID,
 		Name:      name,
 		Model:     model,
 		CreatedAt: timestamp,
 		UpdatedAt: timestamp,
+	}
+}
+
+func accountFromUser(user userRecord) accountRecord {
+	createdAt := user.RegisterAt
+	if createdAt == "" {
+		createdAt = "1970-01-01 00:00:00"
+	}
+	updatedAt := user.LastSignAt
+	if updatedAt == "" {
+		updatedAt = createdAt
+	}
+
+	return accountRecord{
+		ID:         user.UID,
+		CoreUserID: user.UUID,
+		Password:   "",
+		LastSignAt: user.LastSignAt,
+		CreatedAt:  createdAt,
+		UpdatedAt:  updatedAt,
 	}
 }
 
@@ -437,6 +476,7 @@ func buildTextureProperty(cfg Config, sign signer, user userRecord, profile prof
 		Name:       "textures",
 		Value:      value,
 		Signature:  signature,
+		DeleteWhen: 0,
 		Unsigned:   unsigned,
 		SourceHash: copiedHashes,
 	}, warnings, nil
@@ -627,18 +667,12 @@ func looksLikeBcrypt(password string) bool {
 	return strings.HasPrefix(password, "$2y$") || strings.HasPrefix(password, "$2b$") || strings.HasPrefix(password, "$2a$")
 }
 
-func renderSQL(baselinePath string, users []userRecord, profiles []profileRecord, props []propertyRecord) (string, error) {
+func renderHASQL(baselinePath string, users []userRecord) (string, error) {
 	sort.Slice(users, func(i, j int) bool { return users[i].UID < users[j].UID })
-	sort.Slice(profiles, func(i, j int) bool { return profiles[i].ID < profiles[j].ID })
-	sort.Slice(props, func(i, j int) bool { return props[i].ProfileID < props[j].ProfileID })
 
-	var baseline string
-	if baselinePath != "" {
-		data, err := os.ReadFile(baselinePath)
-		if err != nil {
-			return "", fmt.Errorf("read baseline SQL: %w", err)
-		}
-		baseline = string(data)
+	baseline, err := readBaselineSQL(baselinePath, "HA")
+	if err != nil {
+		return "", err
 	}
 
 	var b strings.Builder
@@ -647,18 +681,13 @@ func renderSQL(baselinePath string, users []userRecord, profiles []profileRecord
 		b.WriteString("\n\n-- ----------------------------\n")
 		b.WriteString("-- BS2HA MIGRATED DATA\n")
 		b.WriteString("-- ----------------------------\n\n")
-	} else {
-		b.WriteString("SET FOREIGN_KEY_CHECKS = 0;\n\n")
-		// DDL fallback... (keeping existing DDL code as fallback)
-		b.WriteString("CREATE TABLE IF NOT EXISTS `users` (\n")
-		// ... (omitting for brevity in SearchReplace but keeping in actual code)
 	}
 
 	b.WriteString("SET FOREIGN_KEY_CHECKS = 0;\n")
 	b.WriteString("START TRANSACTION;\n\n")
 
 	if len(users) > 0 {
-		b.WriteString("INSERT INTO `users` (`uid`,`uuid`,`email`,`cbh`,`mojang_uuid`,`avatar`,`password`,`ip`,`permission`,`last_sign_at`,`register_at`,`verified`,`remember_token`,`username`,`mbe`,`regip`,`totp`,`2FA`) VALUES\n")
+		b.WriteString("INSERT INTO `users` (`uid`,`uuid`,`email`,`avatar`,`password`,`ip`,`permission`,`last_sign_at`,`register_at`,`verified`,`username`,`regip`,`totp`,`2FA`,`webauthn_2fa_enabled`,`email_2fa_enabled`,`recovery_key`,`recovery_key_enabled`,`deleted_at`) VALUES\n")
 		for i, user := range users {
 			if i > 0 {
 				b.WriteString(",\n")
@@ -668,8 +697,6 @@ func renderSQL(baselinePath string, users []userRecord, profiles []profileRecord
 				strconv.FormatUint(user.UID, 10),
 				quoteSQL(user.UUID),
 				nullableSQL(user.Email),
-				"1",
-				"NULL",
 				nullableSQL(user.Avatar),
 				quoteSQL(user.Password),
 				nullableSQL(user.IP),
@@ -677,12 +704,64 @@ func renderSQL(baselinePath string, users []userRecord, profiles []profileRecord
 				nullableSQL(user.LastSignAt),
 				nullableSQL(user.RegisterAt),
 				boolSQL(user.Verified),
-				nullableSQL(user.RememberToken),
 				nullableSQL(user.Username),
-				"0",
 				nullableSQL(user.RegIP),
 				"NULL",
 				"0",
+				"0",
+				"0",
+				"NULL",
+				"0",
+				"NULL",
+			}, ","))
+			b.WriteString(")")
+		}
+		b.WriteString(";\n\n")
+	}
+
+	b.WriteString("COMMIT;\n")
+	b.WriteString("SET FOREIGN_KEY_CHECKS = 1;\n")
+	return b.String(), nil
+}
+
+func renderYGGSQL(baselinePath string, accounts []accountRecord, profiles []profileRecord, props []propertyRecord) (string, error) {
+	sort.Slice(accounts, func(i, j int) bool { return accounts[i].ID < accounts[j].ID })
+	sort.Slice(profiles, func(i, j int) bool { return profiles[i].ID < profiles[j].ID })
+	sort.Slice(props, func(i, j int) bool { return props[i].ProfileID < props[j].ProfileID })
+
+	baseline, err := readBaselineSQL(baselinePath, "Ygg")
+	if err != nil {
+		return "", err
+	}
+
+	var b strings.Builder
+	if baseline != "" {
+		b.WriteString(baseline)
+		b.WriteString("\n\n-- ----------------------------\n")
+		b.WriteString("-- BS2HA MIGRATED DATA\n")
+		b.WriteString("-- ----------------------------\n\n")
+	}
+
+	b.WriteString("SET FOREIGN_KEY_CHECKS = 0;\n")
+	b.WriteString("START TRANSACTION;\n\n")
+
+	if len(accounts) > 0 {
+		b.WriteString("INSERT INTO `accounts` (`id`,`core_user_id`,`mojang_uuid`,`password`,`mbe`,`cbh`,`last_sign_at`,`created_at`,`updated_at`) VALUES\n")
+		for i, account := range accounts {
+			if i > 0 {
+				b.WriteString(",\n")
+			}
+			b.WriteString("(")
+			b.WriteString(strings.Join([]string{
+				strconv.FormatUint(account.ID, 10),
+				nullableSQL(account.CoreUserID),
+				"NULL",
+				nullableSQL(account.Password),
+				"0",
+				"1",
+				nullableSQL(account.LastSignAt),
+				nullableSQL(account.CreatedAt),
+				nullableSQL(account.UpdatedAt),
 			}, ","))
 			b.WriteString(")")
 		}
@@ -690,7 +769,7 @@ func renderSQL(baselinePath string, users []userRecord, profiles []profileRecord
 	}
 
 	if len(profiles) > 0 {
-		b.WriteString("INSERT INTO `profiles` (`id`,`user_id`,`name`,`model`,`created_at`,`updated_at`) VALUES\n")
+		b.WriteString("INSERT INTO `profiles` (`id`,`account_id`,`name`,`model`,`created_at`,`updated_at`) VALUES\n")
 		for i, profile := range profiles {
 			if i > 0 {
 				b.WriteString(",\n")
@@ -698,7 +777,7 @@ func renderSQL(baselinePath string, users []userRecord, profiles []profileRecord
 			b.WriteString("(")
 			b.WriteString(strings.Join([]string{
 				quoteSQL(profile.ID),
-				quoteSQL(profile.UserID),
+				strconv.FormatUint(profile.AccountID, 10),
 				quoteSQL(profile.Name),
 				quoteSQL(profile.Model),
 				nullableSQL(profile.CreatedAt),
@@ -710,7 +789,7 @@ func renderSQL(baselinePath string, users []userRecord, profiles []profileRecord
 	}
 
 	if len(props) > 0 {
-		b.WriteString("INSERT INTO `profile_properties` (`profile_id`,`name`,`value`,`signature`) VALUES\n")
+		b.WriteString("INSERT INTO `profile_properties` (`profile_id`,`name`,`value`,`signature`,`delete_when`) VALUES\n")
 		for i, prop := range props {
 			if i > 0 {
 				b.WriteString(",\n")
@@ -721,6 +800,7 @@ func renderSQL(baselinePath string, users []userRecord, profiles []profileRecord
 				quoteSQL(prop.Name),
 				quoteSQL(prop.Value),
 				nullableSQL(prop.Signature),
+				strconv.FormatInt(prop.DeleteWhen, 10),
 			}, ","))
 			b.WriteString(")")
 		}
@@ -730,6 +810,17 @@ func renderSQL(baselinePath string, users []userRecord, profiles []profileRecord
 	b.WriteString("COMMIT;\n")
 	b.WriteString("SET FOREIGN_KEY_CHECKS = 1;\n")
 	return b.String(), nil
+}
+
+func readBaselineSQL(path string, label string) (string, error) {
+	if path == "" {
+		return "", nil
+	}
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return "", fmt.Errorf("read %s baseline SQL: %w", label, err)
+	}
+	return string(data), nil
 }
 
 func quoteSQL(value string) string {

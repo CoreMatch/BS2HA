@@ -76,11 +76,14 @@ INSERT INTO ` + "`textures`" + ` (` + "`tid`" + `,` + "`type`" + `,` + "`hash`" 
 		t.Fatalf("Run() error = %v", err)
 	}
 
-	if !strings.Contains(result.SQL, "'$2y$10$keepme'") {
-		t.Fatalf("expected bcrypt hash to be copied into SQL:\n%s", result.SQL)
+	if !strings.Contains(result.HASQL, "'$2y$10$keepme'") {
+		t.Fatalf("expected bcrypt hash in HA SQL:\n%s", result.HASQL)
 	}
-	if !strings.Contains(result.SQL, "'Alice','slim'") {
-		t.Fatalf("expected matching player profile to be kept with slim model:\n%s", result.SQL)
+	if !strings.Contains(result.YGGSQL, "'Alice','slim'") {
+		t.Fatalf("expected matching player profile in Ygg SQL:\n%s", result.YGGSQL)
+	}
+	if !strings.Contains(result.YGGSQL, "'profile','textures'") && !strings.Contains(result.YGGSQL, "`profile_properties`") {
+		t.Fatalf("expected Ygg SQL to include profile properties insert:\n%s", result.YGGSQL)
 	}
 	if _, err := os.Stat(filepath.Join(cfg.HATexturesOutDir, "skinhash")); err != nil {
 		t.Fatalf("expected copied texture file: %v", err)
@@ -141,7 +144,7 @@ INSERT INTO ` + "`users`" + ` (` + "`uid`" + `,` + "`email`" + `,` + "`nickname`
 		t.Fatalf("Run() error = %v", err)
 	}
 
-	if !strings.Contains(result.SQL, "'"+resetRequiredMarker+"'") {
-		t.Fatalf("expected reset marker in SQL:\n%s\nreport:\n%s", result.SQL, string(result.ReportJSON))
+	if !strings.Contains(result.HASQL, "'"+resetRequiredMarker+"'") {
+		t.Fatalf("expected reset marker in HA SQL:\n%s\nreport:\n%s", result.HASQL, string(result.ReportJSON))
 	}
 }

@@ -59,7 +59,9 @@ func FillConfig(cfg *convert.Config) error {
 		haPrivateKey   = cfg.HAPrivateKeyPath
 		haKeyContent   = cfg.HAPrivateKeyContent
 		haBaselineSQL  = cfg.HABaselineSQLPath
-		outSQLPath     = cfg.OutSQLPath
+		yggBaselineSQL = cfg.YGGBaselineSQLPath
+		haOutSQLPath   = cfg.HAOutSQLPath
+		yggOutSQLPath  = cfg.YGGOutSQLPath
 		outReportPath  = cfg.OutReportPath
 		haTexturesOut  = cfg.HATexturesOutDir
 		usernameColumn = cfg.BSUsernameColumn
@@ -299,7 +301,7 @@ func FillConfig(cfg *convert.Config) error {
 	}
 
 	// 5. Outputs
-	if outSQLPath == "" || outReportPath == "" {
+	if haOutSQLPath == "" || yggOutSQLPath == "" || outReportPath == "" {
 		err := huh.NewForm(
 			huh.NewGroup(
 				huh.NewInput().
@@ -317,9 +319,27 @@ func FillConfig(cfg *convert.Config) error {
 						return nil
 					}),
 				huh.NewInput().
-					Title("Output SQL Path").
+					Title("HRPAuth Yggdrasil Baseline SQL").
+					Description("Leave empty for default (ygg-baseline.sql).").
+					Placeholder("ygg-baseline.sql").
+					Value(&yggBaselineSQL).
+					Validate(func(s string) error {
+						if s == "" {
+							return nil
+						}
+						if _, err := os.Stat(s); os.IsNotExist(err) {
+							return fmt.Errorf("file %s not found", s)
+						}
+						return nil
+					}),
+				huh.NewInput().
+					Title("Output HA SQL Path").
 					Placeholder("ha-import.sql").
-					Value(&outSQLPath),
+					Value(&haOutSQLPath),
+				huh.NewInput().
+					Title("Output Ygg SQL Path").
+					Placeholder("ygg-import.sql").
+					Value(&yggOutSQLPath),
 				huh.NewInput().
 					Title("Output Report Path").
 					Placeholder("ha-import-report.json").
@@ -354,13 +374,21 @@ func FillConfig(cfg *convert.Config) error {
 	}
 	if haBaselineSQL == "" {
 		haBaselineSQL = "ha-baseline.sql"
-		// If ha-baseline.sql doesn't exist, we'll just not use a baseline
 		if _, err := os.Stat(haBaselineSQL); os.IsNotExist(err) {
 			haBaselineSQL = ""
 		}
 	}
-	if outSQLPath == "" {
-		outSQLPath = "ha-import.sql"
+	if yggBaselineSQL == "" {
+		yggBaselineSQL = "ygg-baseline.sql"
+		if _, err := os.Stat(yggBaselineSQL); os.IsNotExist(err) {
+			yggBaselineSQL = ""
+		}
+	}
+	if haOutSQLPath == "" {
+		haOutSQLPath = "ha-import.sql"
+	}
+	if yggOutSQLPath == "" {
+		yggOutSQLPath = "ygg-import.sql"
 	}
 	if outReportPath == "" {
 		outReportPath = "ha-import-report.json"
@@ -376,14 +404,16 @@ func FillConfig(cfg *convert.Config) error {
 	cfg.HAPrivateKeyPath = haPrivateKey
 	cfg.HAPrivateKeyContent = haKeyContent
 	cfg.HABaselineSQLPath = haBaselineSQL
-	cfg.OutSQLPath = outSQLPath
+	cfg.YGGBaselineSQLPath = yggBaselineSQL
+	cfg.HAOutSQLPath = haOutSQLPath
+	cfg.YGGOutSQLPath = yggOutSQLPath
 	cfg.OutReportPath = outReportPath
 	cfg.HATexturesOutDir = haTexturesOut
 	cfg.BSUsernameColumn = usernameColumn
 	cfg.AllowUnsignedTextures = unsigned
 
 	if cfg.HATexturesOutDir == "" {
-		cfg.HATexturesOutDir = filepath.Join(filepath.Dir(cfg.OutSQLPath), "textures")
+		cfg.HATexturesOutDir = filepath.Join(filepath.Dir(cfg.HAOutSQLPath), "textures")
 	}
 
 	return nil

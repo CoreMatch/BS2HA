@@ -13,7 +13,7 @@ go build -o bs2ha ./cmd/bs2ha
 ```
 
 The tool will automatically:
-- Release the HRPAuth baseline SQL template (`ha-baseline.sql`).
+- Release the HRPAuth baseline SQL templates (`ha-baseline.sql` and `ygg-baseline.sql`).
 - Detect your `bs.sql` and textures directory.
 - Guide you through the configuration via a TUI if any parameters are missing.
 - Auto-generate a new signing key if you don't provide one.
@@ -25,7 +25,8 @@ For advanced CLI usage:
   --bs-sql ./bs.sql \
   --bs-textures ./storage/textures \
   --ha-callback-url https://auth.example.com \
-  --out-sql ./ha-import.sql
+  --ha-out-sql ./ha-import.sql \
+  --ygg-out-sql ./ygg-import.sql
 ```
 
 Notes:
@@ -34,3 +35,4 @@ Notes:
 - pass `--unsigned` only for non-production imports without a signing key
 - the current BlessingSkin dump format uses `users.nickname` as the canonical source for `HA.users.username`
 - password method is detected from SQL; `BCRYPT` hashes are copied directly, other methods become `BS2HA$RESET_REQUIRED`
+- generated output is split into `ha-import.sql` for the core database and `ygg-import.sql` for the Yggdrasil database

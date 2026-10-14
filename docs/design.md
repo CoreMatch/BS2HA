@@ -34,9 +34,11 @@
 3. `--ha-callback-url <url>`：HRPAuth 回调基地址，用于生成 `textures.url`
 4. `--ha-private-key <path>`：HRPAuth 私钥文件路径
 5. `--ha-private-key-content <content>`：HRPAuth 私钥 PEM 内容（支持直接粘贴）
-6. `--ha-baseline-sql <path>`：HRPAuth 数据库模板文件（默认：`./ha-baseline.sql`，由程序内嵌并自动释放）
-7. `--out-sql <path>`：输出 SQL 文件路径
-8. `--out-report <path>`：输出报告文件路径
+6. `--ha-baseline-sql <path>`：HRPAuth Core 数据库模板文件（默认：`./ha-baseline.sql`，由程序内嵌并自动释放）
+7. `--ygg-baseline-sql <path>`：HRPAuth Yggdrasil 数据库模板文件（默认：`./ygg-baseline.sql`，由程序内嵌并自动释放）
+8. `--ha-out-sql <path>`：输出 Core SQL 文件路径
+9. `--ygg-out-sql <path>`：输出 Ygg SQL 文件路径
+10. `--out-report <path>`：输出报告文件路径
 
 ## 交互设计 (TUI)
 
@@ -49,15 +51,21 @@
 
 ## 输出物
 
-### 1. HA 导入 SQL
+### 1. HA Core 导入 SQL
 
-按依赖顺序输出：
+输出 Core 数据库所需的数据：
 
 1. `users`
+
+### 2. Ygg 导入 SQL
+
+输出 Yggdrasil 数据库所需的数据：
+
+1. `accounts`
 2. `profiles`
 3. `profile_properties`
 
-### 2. 迁移报告
+### 3. 迁移报告
 
 至少包含：
 
@@ -185,7 +193,8 @@ bs2ha convert \
   --bs-textures ./textures \
   --ha-callback-url https://auth.example.com \
   --ha-private-key ./private_key.pem \
-  --out-sql ./ha-import.sql \
+  --ha-out-sql ./ha-import.sql \
+  --ygg-out-sql ./ygg-import.sql \
   --out-report ./ha-import-report.json
 ```
 
@@ -195,7 +204,7 @@ bs2ha convert \
 2. `staging`：构造成内部中间结构
 3. `mapper`：执行用户、角色、材质、密码映射规则
 4. `signer`：对 textures property 签名
-5. `emitter`：输出 HA SQL
+5. `emitter`：输出 HA / Ygg SQL
 6. `reporter`：输出 JSON / Markdown 报告
 
 ## 当前边界

@@ -16,8 +16,8 @@ import (
 func Run(args []string) error {
 	// Default to "convert" command if no arguments are provided
 	if len(args) == 0 {
-		if err := releaseBaselineSQL(); err != nil {
-			fmt.Printf("Warning: failed to release baseline SQL: %v\n", err)
+		if err := releaseBaselineSQLs(); err != nil {
+			fmt.Printf("Warning: failed to release baseline SQL files: %v\n", err)
 		}
 		return runConvert([]string{})
 	}
@@ -25,8 +25,8 @@ func Run(args []string) error {
 	switch args[0] {
 	case "convert":
 		// Release baseline SQL early
-		if err := releaseBaselineSQL(); err != nil {
-			fmt.Printf("Warning: failed to release baseline SQL: %v\n", err)
+		if err := releaseBaselineSQLs(); err != nil {
+			fmt.Printf("Warning: failed to release baseline SQL files: %v\n", err)
 		}
 		return runConvert(args[1:])
 	case "-h", "--help", "help":
@@ -37,15 +37,23 @@ func Run(args []string) error {
 }
 
 func usageError() error {
-	return errors.New("usage: bs2ha convert --bs-sql <path> --ha-callback-url <url> --out-sql <path> --out-report <path> [--bs-textures <path>] [--ha-private-key <path>] [--ha-private-key-content <pem>] [--ha-textures-out <path>] [--bs-username-column <name>] [--unsigned]")
+	return errors.New("usage: bs2ha convert --bs-sql <path> --ha-callback-url <url> --ha-out-sql <path> --ygg-out-sql <path> --out-report <path> [--bs-textures <path>] [--ha-private-key <path>] [--ha-private-key-content <pem>] [--ha-baseline-sql <path>] [--ygg-baseline-sql <path>] [--ha-textures-out <path>] [--bs-username-column <name>] [--unsigned]")
 }
 
-func releaseBaselineSQL() error {
-	const filename = "ha-baseline.sql"
-	if _, err := os.Stat(filename); err == nil {
-		return nil // Already exists
+func releaseBaselineSQLs() error {
+	files := map[string][]byte{
+		"ha-baseline.sql":  assets.HABaselineSQL,
+		"ygg-baseline.sql": assets.YGGBaselineSQL,
 	}
-	return os.WriteFile(filename, assets.HABaselineSQL, 0644)
+	for name, body := range files {
+		if _, err := os.Stat(name); err == nil {
+			continue
+		}
+		if err := os.WriteFile(name, body, 0o644); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func runConvert(args []string) error {
@@ -59,8 +67,10 @@ func runConvert(args []string) error {
 	fs.StringVar(&cfg.HAPrivateKeyPath, "ha-private-key", "", "path to HRPAuth Yggdrasil private key")
 	fs.StringVar(&cfg.HAPrivateKeyContent, "ha-private-key-content", "", "raw HRPAuth Yggdrasil private key PEM content")
 	fs.StringVar(&cfg.HABaselineSQLPath, "ha-baseline-sql", "", "path to HRPAuth baseline SQL template")
+	fs.StringVar(&cfg.YGGBaselineSQLPath, "ygg-baseline-sql", "", "path to HRPAuth Yggdrasil baseline SQL template")
 	fs.StringVar(&cfg.GeneratedKeyPath, "ha-gen-key-path", "hrpauth-generated.key", "where to save the auto-generated key")
-	fs.StringVar(&cfg.OutSQLPath, "out-sql", "", "path to generated HRPAuth SQL file")
+	fs.StringVar(&cfg.HAOutSQLPath, "ha-out-sql", "", "path to generated HRPAuth core SQL file")
+	fs.StringVar(&cfg.YGGOutSQLPath, "ygg-out-sql", "", "path to generated HRPAuth Yggdrasil SQL file")
 	fs.StringVar(&cfg.OutReportPath, "out-report", "", "path to generated migration report JSON")
 	fs.StringVar(&cfg.HATexturesOutDir, "ha-textures-out", "", "path to copied HRPAuth textures output directory")
 	fs.StringVar(&cfg.BSUsernameColumn, "bs-username-column", "nickname", "BlessingSkin canonical username column name in users table")
@@ -73,7 +83,8 @@ func runConvert(args []string) error {
 	// Check if any required parameters are missing
 	isMissingRequired := cfg.BSSQLPath == "" ||
 		cfg.HACallbackURL == "" ||
-		cfg.OutSQLPath == "" ||
+		cfg.HAOutSQLPath == "" ||
+		cfg.YGGOutSQLPath == "" ||
 		cfg.OutReportPath == ""
 
 	if isMissingRequired {
@@ -84,7 +95,7 @@ func runConvert(args []string) error {
 	}
 
 	if cfg.HATexturesOutDir == "" {
-		cfg.HATexturesOutDir = filepath.Join(filepath.Dir(cfg.OutSQLPath), "textures")
+		cfg.HATexturesOutDir = filepath.Join(filepath.Dir(cfg.HAOutSQLPath), "textures")
 	}
 	if cfg.BSUsernameColumn == "" {
 		cfg.BSUsernameColumn = "nickname"
@@ -107,11 +118,18 @@ func runConvert(args []string) error {
 		return err
 	}
 
-	if err := os.MkdirAll(filepath.Dir(cfg.OutSQLPath), 0o755); err != nil {
-		return fmt.Errorf("create SQL output directory: %w", err)
+	if err := os.MkdirAll(filepath.Dir(cfg.HAOutSQLPath), 0o755); err != nil {
+		return fmt.Errorf("create HA SQL output directory: %w", err)
 	}
-	if err := os.WriteFile(cfg.OutSQLPath, []byte(result.SQL), 0o644); err != nil {
-		return fmt.Errorf("write SQL output: %w", err)
+	if err := os.WriteFile(cfg.HAOutSQLPath, []byte(result.HASQL), 0o644); err != nil {
+		return fmt.Errorf("write HA SQL output: %w", err)
+	}
+
+	if err := os.MkdirAll(filepath.Dir(cfg.YGGOutSQLPath), 0o755); err != nil {
+		return fmt.Errorf("create Ygg SQL output directory: %w", err)
+	}
+	if err := os.WriteFile(cfg.YGGOutSQLPath, []byte(result.YGGSQL), 0o644); err != nil {
+		return fmt.Errorf("write Ygg SQL output: %w", err)
 	}
 
 	if err := os.MkdirAll(filepath.Dir(cfg.OutReportPath), 0o755); err != nil {
