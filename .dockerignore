@@ -1,0 +1,10 @@
+.git
+.gitignore
+.kilo
+.trae
+build
+node_modules
+docs
+*.md
+HA-Contract
+HRPAuth-Wiki
