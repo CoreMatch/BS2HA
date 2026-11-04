@@ -39,26 +39,31 @@ password reset.
 
 ## Evidence
 
-- Two output files and their destinations: `README.md:38` ("split into
+- Two output files and their destinations: `README.md:L38` ("split into
   `ha-import.sql` for the core database and `ygg-import.sql` for the Yggdrasil
-  database"); `docs/design.md:54-66` (ha = Core `users`, ygg = Yggdrasil
+  database"); `docs/design.md:L54-L66` (ha = Core `users`, ygg = Yggdrasil
   `accounts/profiles/profile_properties`).
-- Embedded baselines: `internal/assets/assets.go:7`
-  (`//go:embed ha-baseline.sql`), `:12` (`//go:embed ygg-baseline.sql`);
-  emitted at runtime `internal/app/app.go:43-57`, `README.md:16`; introduced by
+- Embedded baselines: `internal/assets/assets.go::HABaselineSQL`
+  (`//go:embed ha-baseline.sql`), `internal/assets/assets.go::YGGBaselineSQL`
+  (`//go:embed ygg-baseline.sql`); emitted at runtime
+  `internal/app/app.go::releaseBaselineSQLs`, `README.md:L16`; introduced by
   `50c4ae7`.
 - Baseline identity (verified by diff): `internal/assets/ha-baseline.sql` is
   byte-identical to HRPAuth
-  `database/migrations/000001_baseline.up.sql` (tables `users`,
-  `oauth2_clients`, `oauth2_authorization_codes`, `oauth2_access_tokens`,
-  `oauth2_refresh_tokens`, `deleted_accounts`, `webauthn_credentials`);
+  `/home/lnb/Desktop/HA/HRPAuth/database/migrations/000001_baseline.up.sql`
+  (tables `users`, `oauth2_clients`, `oauth2_authorization_codes`,
+  `oauth2_access_tokens`, `oauth2_refresh_tokens`, `deleted_accounts`,
+  `webauthn_credentials`);
   `internal/assets/ygg-baseline.sql` is byte-identical to HRPAuth-Yggdrasil-API
-  `database/migrations/000001_init.up.sql` (`accounts`, `profiles`,
-  `profile_properties`, `sessions`, `tokens`, `profile_keys`).
-- Generated INSERTs match columns: `internal/convert/convert.go:690`
-  (`INSERT INTO users`, 19 columns), `:749,772,792` (`accounts`/`profiles`/
+  `/home/lnb/Desktop/HA/HRPAuth-Yggdrasil-API/database/migrations/000001_init.up.sql`
+  (`accounts`, `profiles`, `profile_properties`, `sessions`, `tokens`,
+  `profile_keys`).
+- Generated INSERTs match columns: `internal/convert/convert.go::renderHASQL`
+  (`INSERT INTO users`, 19 columns),
+  `internal/convert/convert.go::renderYGGSQL` (`accounts`/`profiles`/
   `profile_properties`).
 - Password mapping: bcrypt passthrough vs reset marker
-  `internal/convert/convert.go:26,304-309` (`BS2HA$RESET_REQUIRED`).
+  `internal/convert/convert.go::resetRequiredMarker`,
+  `internal/convert/convert.go::mapUser` (`BS2HA$RESET_REQUIRED`).
 - Commits: `50c4ae7` (baseline templates), `507997f` (separate ha/ygg files).
 - Not verified: none material; baseline identity was confirmed by direct diff.

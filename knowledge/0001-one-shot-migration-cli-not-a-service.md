@@ -34,24 +34,28 @@ BS2HA is a **one-shot, offline migration CLI**, not a resident service:
 
 ## Evidence
 
-- Positioning: `README.md:2` ("Transform your Blessing-Skin-Server database to
-  HRPAuth format."); `docs/design.md:5` (offline migration tool), `:12`
-  (migrated HA runs independently, old BS need not stay online);
-  `Dockerfile:12-13` ("bs2ha is a one-shot migration CLI").
-- Inputs: `internal/app/app.go:64-65` (default `--bs-textures
+- Positioning: `README.md:L2` ("Transform your Blessing-Skin-Server database
+  to HRPAuth format."); `docs/design.md:L5` (offline migration tool),
+  `docs/design.md:L12` (migrated HA runs independently, old BS need not stay
+  online); `Dockerfile:L12-L13` ("bs2ha is a one-shot migration CLI").
+- Inputs: `internal/app/app.go:L64-L65` (default `--bs-textures
   storage/textures`; `--bs-sql` has no flag default); parser accepts only
-  `CREATE TABLE`/`INSERT INTO` text `internal/bsdump/parse.go:137-139`; tables
-  read `internal/convert/convert.go:157,163,172`; username from
-  `users.nickname` `internal/app/app.go:76`, `README.md:36`.
-- Outputs are files only: `internal/app/app.go:124,131,138` (write
-  `HAOutSQLPath`, `YGGOutSQLPath`, `OutReportPath` JSON); report struct
-  `internal/convert/convert.go:51-63`.
+  `CREATE TABLE`/`INSERT INTO` text
+  `internal/bsdump/parse.go::createTablePattern`,
+  `internal/bsdump/parse.go::insertPattern`; tables read
+  `internal/convert/convert.go:L157-L172`; username from
+  `users.nickname` `internal/app/app.go:L76`, `README.md:L36`.
+- Outputs are files only: `internal/app/app.go::HAOutSQLPath`,
+  `internal/app/app.go::YGGOutSQLPath`, `internal/app/app.go::OutReportPath`
+  (write `HAOutSQLPath`, `YGGOutSQLPath`, `OutReportPath` JSON); report
+  struct `internal/convert/convert.go::Report`.
 - No server code: repo-wide grep for `http.ListenAndServe|gin|echo|net/http`
-  returns zero matches; `go.mod:5-8` dependencies are only TUI libraries
+  returns zero matches; `go.mod:L5-L8` dependencies are only TUI libraries
   (`charmbracelet/huh`, `lipgloss`).
-- Delivery forms: CLI flags `internal/app/app.go:59-77`, `README.md:24-30`;
-  TUI auto-entry `internal/app/app.go:84-95`, `internal/tui/tui.go:53-54`;
-  Docker multi-stage `Dockerfile:4-10,16,20-21`.
+- Delivery forms: CLI flags `internal/app/app.go::runConvert`,
+  `README.md:L24-L30`; TUI auto-entry `internal/app/app.go::FillConfig`,
+  `internal/tui/tui.go::FillConfig`; Docker multi-stage
+  `Dockerfile:L4-L10`, `Dockerfile:L16`, `Dockerfile:L20-L21`.
 - Commits: `32c70fb` (initial tool), `436acfc` (modern dump formats),
   `c8bc6a1` (interactive TUI), `0d4eb47` (container image).
 - Not verified: actual runtime behavior was not executed (read-only research);

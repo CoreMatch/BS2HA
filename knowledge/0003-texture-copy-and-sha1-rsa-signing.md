@@ -39,20 +39,24 @@ payload with an RSA key:
 
 ## Evidence
 
-- Texture copy and URL: `internal/convert/convert.go:491-504` (copy by hash),
-  `:506` (`payload URL = HACallbackURL + "/textures/" + hash`);
-  `docs/design.md:146-153` (reuse hash, URL `/textures/{hash}`).
-- Default directory handling: `internal/app/app.go:65` (default
-  `storage/textures`), `:105-109` (skip if missing); TUI candidates
-  `internal/tui/tui.go:17-21`; commit `2320cb8`.
-- Key auto-generation: `internal/convert/convert.go:521-522,550-572` (RSA-4096
-  → `hrpauth-generated.key`), `internal/app/app.go:71`; TUI option "Auto-generate
-  New Key (Recommended)" `internal/tui/tui.go:225`; commit `7bb6779`.
-- Signing scheme: `internal/convert/convert.go:578-583` (`sign()` SHA1+PKCS1v15
-  over base64 payload), written to `profile_properties.signature` `:792,802`.
-- Consumer match: HRPAuth-Yggdrasil-API `services/texture_service.go:494-508`
+- Texture copy and URL: `internal/convert/convert.go::materializeTexture`
+  (copy by hash; `payload URL = HACallbackURL + "/textures/" + hash`);
+  `docs/design.md:L146-L153` (reuse hash, URL `/textures/{hash}`).
+- Default directory handling: `internal/app/app.go:L65` (default
+  `storage/textures`), `internal/app/app.go:L105-L109` (skip if missing);
+  TUI candidates `internal/tui/tui.go::detectBSTextures`; commit `2320cb8`.
+- Key auto-generation: `internal/convert/convert.go::loadSigner`,
+  `internal/convert/convert.go::generateAndSaveKey` (RSA-4096
+  → `hrpauth-generated.key`), `internal/app/app.go:L71`; TUI option
+  "Auto-generate New Key (Recommended)" `internal/tui/tui.go:L225`; commit
+  `7bb6779`.
+- Signing scheme: `internal/convert/convert.go::sign` (`sign()` SHA1+PKCS1v15
+  over base64 payload), written to `profile_properties.signature`
+  `internal/convert/convert.go::renderYGGSQL`.
+- Consumer match: HRPAuth-Yggdrasil-API
+  `/home/lnb/Desktop/HA/HRPAuth-Yggdrasil-API/services/texture_service.go::SignTextureValue`
   (`SignTextureValue`, SHA1+RSA, reads `Yggdrasil.Server.SignaturePrivateKey`);
-  `docs/design.md:182-184` ("使用 HA 私钥对 textures 属性签名").
+  `docs/design.md:L182-L184` ("使用 HA 私钥对 textures 属性签名").
 - Commits: `2320cb8` (default texture dir), `7bb6779` (auto key generation).
 - Not verified: how the generated key is loaded on the HRPAuth/Yggdrasil side in
   a real deployment (`SignaturePrivateKey` is confirmed in the Yggdrasil service
