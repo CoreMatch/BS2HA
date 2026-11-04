@@ -38,8 +38,8 @@ BS2HA is a **one-shot, offline migration CLI**, not a resident service:
   HRPAuth format."); `docs/design.md:5` (offline migration tool), `:12`
   (migrated HA runs independently, old BS need not stay online);
   `Dockerfile:12-13` ("bs2ha is a one-shot migration CLI").
-- Inputs: `internal/app/app.go:64-65` (defaults `--bs-sql ./bs.sql`,
-  `--bs-textures storage/textures`); parser accepts only
+- Inputs: `internal/app/app.go:64-65` (default `--bs-textures
+  storage/textures`; `--bs-sql` has no flag default); parser accepts only
   `CREATE TABLE`/`INSERT INTO` text `internal/bsdump/parse.go:137-139`; tables
   read `internal/convert/convert.go:157,163,172`; username from
   `users.nickname` `internal/app/app.go:76`, `README.md:36`.
@@ -50,7 +50,7 @@ BS2HA is a **one-shot, offline migration CLI**, not a resident service:
   returns zero matches; `go.mod:5-8` dependencies are only TUI libraries
   (`charmbracelet/huh`, `lipgloss`).
 - Delivery forms: CLI flags `internal/app/app.go:59-77`, `README.md:24-30`;
-  TUI auto-entry `internal/app/app.go:84-95`, `internal/tui/tui.go:77-80`;
+  TUI auto-entry `internal/app/app.go:84-95`, `internal/tui/tui.go:53-54`;
   Docker multi-stage `Dockerfile:4-10,16,20-21`.
 - Commits: `32c70fb` (initial tool), `436acfc` (modern dump formats),
   `c8bc6a1` (interactive TUI), `0d4eb47` (container image).
