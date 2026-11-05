@@ -1,7 +1,6 @@
 # ADR-0001: One-Shot Migration CLI, Not a Service
 
 - **Status**: accepted
-- **Date**: 2026-11-04
 
 ## Context
 

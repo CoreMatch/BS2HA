@@ -1,7 +1,6 @@
 # ADR-0003: Texture Copy and SHA1-RSA Signing with Auto-Generated Key
 
 - **Status**: accepted
-- **Date**: 2026-11-04
 
 ## Context
 
