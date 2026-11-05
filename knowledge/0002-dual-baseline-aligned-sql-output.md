@@ -5,11 +5,11 @@
 
 ## Context
 
-The HA ecosystem splits account data across two databases after the Yggdrasil
-split: the HRPAuth **core** database holds `users`, while the
-HRPAuth-Yggdrasil-API database holds Minecraft game accounts/profiles. A
-BlessingSkin migration must populate both, and the generated SQL must match the
-real target schemas or the import will fail.
+The HA ecosystem splits account data across two databases: the HRPAuth
+**core** database holds `users`, while the HRPAuth-Yggdrasil-API database
+holds Minecraft game accounts/profiles. A BlessingSkin migration must populate
+both, and the generated SQL must match the real target schemas or the import
+will fail.
 
 ## Decision
 
@@ -46,8 +46,7 @@ password reset.
 - Embedded baselines: `internal/assets/assets.go::HABaselineSQL`
   (`//go:embed ha-baseline.sql`), `internal/assets/assets.go::YGGBaselineSQL`
   (`//go:embed ygg-baseline.sql`); emitted at runtime
-  `internal/app/app.go::releaseBaselineSQLs`, `README.md:L16`; introduced by
-  `50c4ae7`.
+  `internal/app/app.go::releaseBaselineSQLs`, `README.md:L16`.
 - Baseline identity (verified by diff): `internal/assets/ha-baseline.sql` is
   byte-identical to HRPAuth
   `/home/lnb/Desktop/HA/HRPAuth/database/migrations/000001_baseline.up.sql`
@@ -65,5 +64,4 @@ password reset.
 - Password mapping: bcrypt passthrough vs reset marker
   `internal/convert/convert.go::resetRequiredMarker`,
   `internal/convert/convert.go::mapUser` (`BS2HA$RESET_REQUIRED`).
-- Commits: `50c4ae7` (baseline templates), `507997f` (separate ha/ygg files).
 - Not verified: none material; baseline identity was confirmed by direct diff.
