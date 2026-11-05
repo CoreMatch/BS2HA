@@ -26,7 +26,7 @@ Each entry is one page in ADR style:
 - **Context** — the problem and constraints
 - **Decision** — what was chosen
 - **Consequences** — including costs and limitations
-- **Evidence** — `file:line`, protocol entries, commit hashes. Every piece of
+- **Evidence** — `file:line`, protocol entries. Every piece of
   evidence must have been actually checked; anything that could not be verified
   is marked "not verified". Do not fabricate.
 

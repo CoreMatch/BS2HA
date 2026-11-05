@@ -56,7 +56,5 @@ BS2HA is a **one-shot, offline migration CLI**, not a resident service:
   `README.md:L24-L30`; TUI auto-entry `internal/app/app.go::FillConfig`,
   `internal/tui/tui.go::FillConfig`; Docker multi-stage
   `Dockerfile:L4-L10`, `Dockerfile:L16`, `Dockerfile:L20-L21`.
-- Commits: `32c70fb` (initial tool), `436acfc` (modern dump formats),
-  `c8bc6a1` (interactive TUI), `0d4eb47` (container image).
 - Not verified: actual runtime behavior was not executed (read-only research);
   correctness is asserted from code reading.
