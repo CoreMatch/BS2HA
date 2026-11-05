@@ -1,7 +1,6 @@
 # ADR-0002: Dual Baseline-Aligned SQL Output (ha + ygg)
 
 - **Status**: accepted
-- **Date**: 2026-11-04
 
 ## Context
 

@@ -22,7 +22,7 @@ target**, and surface the conflict to the owner.
 
 Each entry is one page in ADR style:
 
-- **Status** (`accepted` / `superseded` / ...), **Date**
+- **Status** (`accepted` / `superseded` / ...)
 - **Context** — the problem and constraints
 - **Decision** — what was chosen
 - **Consequences** — including costs and limitations
@@ -32,8 +32,8 @@ Each entry is one page in ADR style:
 
 ## Entries
 
-| # | Title | Status | Date |
-|---|-------|--------|------|
-| [0001](0001-one-shot-migration-cli-not-a-service.md) | One-Shot Migration CLI, Not a Service | accepted | 2026-11-04 |
-| [0002](0002-dual-baseline-aligned-sql-output.md) | Dual Baseline-Aligned SQL Output (ha + ygg) | accepted | 2026-11-04 |
-| [0003](0003-texture-copy-and-sha1-rsa-signing.md) | Texture Copy and SHA1-RSA Signing with Auto-Generated Key | accepted | 2026-11-04 |
+| # | Title | Status |
+|---|-------|--------|
+| [0001](0001-one-shot-migration-cli-not-a-service.md) | One-Shot Migration CLI, Not a Service | accepted |
+| [0002](0002-dual-baseline-aligned-sql-output.md) | Dual Baseline-Aligned SQL Output (ha + ygg) | accepted |
+| [0003](0003-texture-copy-and-sha1-rsa-signing.md) | Texture Copy and SHA1-RSA Signing with Auto-Generated Key | accepted |
