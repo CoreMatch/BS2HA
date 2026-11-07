@@ -31,7 +31,8 @@ For advanced CLI usage:
 
 Notes:
 
-- copied HA texture files default to `./out/textures` when `--ha-textures-out` is omitted
+- copied HA texture files default to a `textures/` directory next to the
+  `--ha-out-sql` output when `--ha-textures-out` is omitted
 - pass `--unsigned` only for non-production imports without a signing key
 - the current BlessingSkin dump format uses `users.nickname` as the canonical source for `HA.users.username`
 - password method is detected from SQL; `BCRYPT` hashes are copied directly, other methods become `BS2HA$RESET_REQUIRED`
