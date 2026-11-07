@@ -40,7 +40,7 @@ payload with an RSA key:
 
 - Texture copy and URL: `internal/convert/convert.go::materializeTexture`
   (copy by hash; `payload URL = HACallbackURL + "/textures/" + hash`);
-  `docs/design.md:L146-L153 ~ BS 的 `textures.hash` 与材质文件名天然对应，一期直接复用该哈希。` (reuse hash, URL `/textures/{hash}`).
+  `docs/design.md:L146-L153 fp=feb21e51 ~ BS 的 `textures.hash` 与材质文件名天然对应，一期直接复用该哈希。` (reuse hash, URL `/textures/{hash}`).
 - Default directory handling: `internal/app/app.go::runConvert` (default
   `storage/textures`), `internal/app/app.go::runConvert` (skip if missing);
   TUI candidates `internal/tui/tui.go::detectBSTextures`.
@@ -54,7 +54,7 @@ payload with an RSA key:
 - Consumer match: HRPAuth-Yggdrasil-API
   `/home/lnb/Desktop/HA/HRPAuth-Yggdrasil-API/services/texture_service.go::SignTextureValue`
   (`SignTextureValue`, SHA1+RSA, reads `Yggdrasil.Server.SignaturePrivateKey`);
-  `docs/design.md:L182-L184 ~ 为了让迁移后的 Yggdrasil 资料立即可用，迁移工具应该使用 HA 私钥对 `textur` ("使用 HA 私钥对 textures 属性签名").
+  `docs/design.md:L182-L184 fp=cbbb705e ~ 为了让迁移后的 Yggdrasil 资料立即可用，迁移工具应该使用 HA 私钥对 `textur` ("使用 HA 私钥对 textures 属性签名").
 - Not verified: how the generated key is loaded on the HRPAuth/Yggdrasil side in
   a real deployment (`SignaturePrivateKey` is confirmed in the Yggdrasil service
   config, but the hand-off is an operational step outside this repo).
