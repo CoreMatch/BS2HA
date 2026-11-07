@@ -38,14 +38,14 @@ password reset.
 
 ## Evidence
 
-- Two output files and their destinations: `README.md:L38` ("split into
+- Two output files and their destinations: `README.md:L38-L38 ~ - password method is detected from SQL; `BCRYPT`` ("split into
   `ha-import.sql` for the core database and `ygg-import.sql` for the Yggdrasil
-  database"); `docs/design.md:L54-L66` (ha = Core `users`, ygg = Yggdrasil
+  database"); `docs/design.md:L54-L66 ~ 1. HA Core 导入 SQL` (ha = Core `users`, ygg = Yggdrasil
   `accounts/profiles/profile_properties`).
 - Embedded baselines: `internal/assets/assets.go::HABaselineSQL`
   (`//go:embed ha-baseline.sql`), `internal/assets/assets.go::YGGBaselineSQL`
   (`//go:embed ygg-baseline.sql`); emitted at runtime
-  `internal/app/app.go::releaseBaselineSQLs`, `README.md:L16`.
+  `internal/app/app.go::releaseBaselineSQLs`, `README.md:L16-L16 ~ - Release the HRPAuth baseline SQL templates (`h`.
 - Baseline identity (verified by diff): `internal/assets/ha-baseline.sql` is
   byte-identical to HRPAuth
   `/home/lnb/Desktop/HA/HRPAuth/database/migrations/000001_baseline.up.sql`
