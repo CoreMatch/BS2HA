@@ -33,26 +33,26 @@ BS2HA is a **one-shot, offline migration CLI**, not a resident service:
 
 ## Evidence
 
-- Positioning: `README.md:L2` ("Transform your Blessing-Skin-Server database
-  to HRPAuth format."); `docs/design.md:L5` (offline migration tool),
-  `docs/design.md:L12` (migrated HA runs independently, old BS need not stay
+- Positioning: `README.md:L2-L2 ~ Transform your Blessing-Skin-Server database to ` ("Transform your Blessing-Skin-Server database
+  to HRPAuth format."); `docs/design.md:L5-L5 ~ 做一个离线迁移工具：` (offline migration tool),
+  `docs/design.md:L12-L12 ~ 目标是让迁移后的 HA 可以独立运行，不依赖旧 BS 继续在线。` (migrated HA runs independently, old BS need not stay
   online); `Dockerfile:L12-L13` ("bs2ha is a one-shot migration CLI").
-- Inputs: `internal/app/app.go:L64-L65` (default `--bs-textures
+- Inputs: `internal/app/app.go::runConvert` (default `--bs-textures
   storage/textures`; `--bs-sql` has no flag default); parser accepts only
   `CREATE TABLE`/`INSERT INTO` text
   `internal/bsdump/parse.go::createTablePattern`,
   `internal/bsdump/parse.go::insertPattern`; tables read
-  `internal/convert/convert.go:L157-L172`; username from
-  `users.nickname` `internal/app/app.go:L76`, `README.md:L36`.
+  `internal/convert/convert.go::Run`; username from
+  `users.nickname` `internal/app/app.go::runConvert`, `README.md:L36-L36 ~ - pass `--unsigned` only for non-production impo`.
 - Outputs are files only: `internal/app/app.go::HAOutSQLPath`,
   `internal/app/app.go::YGGOutSQLPath`, `internal/app/app.go::OutReportPath`
   (write `HAOutSQLPath`, `YGGOutSQLPath`, `OutReportPath` JSON); report
   struct `internal/convert/convert.go::Report`.
 - No server code: repo-wide grep for `http.ListenAndServe|gin|echo|net/http`
-  returns zero matches; `go.mod:L5-L8` dependencies are only TUI libraries
+  returns zero matches; `go.mod:L5-L8 ~ require (` dependencies are only TUI libraries
   (`charmbracelet/huh`, `lipgloss`).
 - Delivery forms: CLI flags `internal/app/app.go::runConvert`,
-  `README.md:L24-L30`; TUI auto-entry `internal/app/app.go::FillConfig`,
+  `README.md:L24-L30 ~ ./bs2ha convert \`; TUI auto-entry `internal/app/app.go::FillConfig`,
   `internal/tui/tui.go::FillConfig`; Docker multi-stage
   `Dockerfile:L4-L10`, `Dockerfile:L16`, `Dockerfile:L20-L21`.
 - Not verified: actual runtime behavior was not executed (read-only research);
