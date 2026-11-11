@@ -52,7 +52,7 @@ payload with an RSA key:
   over base64 payload), written to `profile_properties.signature`
   `internal/convert/convert.go::renderYGGSQL`.
 - Consumer match: HRPAuth-Yggdrasil-API
-  `/home/lnb/Desktop/HA/HRPAuth-Yggdrasil-API/services/texture_service.go::SignTextureValue`
+  `/home/lnb/Desktop/HA/hrpauth/HRPAuth-Yggdrasil-API/services/texture_service.go::SignTextureValue`
   (`SignTextureValue`, SHA1+RSA, reads `Yggdrasil.Server.SignaturePrivateKey`);
   `docs/design.md:L182-L184 fp=cbbb705e ~ 为了让迁移后的 Yggdrasil 资料立即可用，迁移工具应该使用 HA 私钥对 `textur` ("使用 HA 私钥对 textures 属性签名").
 - Not verified: how the generated key is loaded on the HRPAuth/Yggdrasil side in

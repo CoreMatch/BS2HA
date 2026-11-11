@@ -48,12 +48,12 @@ password reset.
   `internal/app/app.go::releaseBaselineSQLs`, `README.md:L16-L16 fp=4841c280 ~ - Release the HRPAuth baseline SQL templates (`h`.
 - Baseline identity (verified by diff): `internal/assets/ha-baseline.sql` is
   byte-identical to HRPAuth
-  `/home/lnb/Desktop/HA/HRPAuth/database/migrations/000001_baseline.up.sql`
+  `/home/lnb/Desktop/HA/hrpauth/HRPAuth/database/migrations/000001_baseline.up.sql`
   (tables `users`, `oauth2_clients`, `oauth2_authorization_codes`,
   `oauth2_access_tokens`, `oauth2_refresh_tokens`, `deleted_accounts`,
   `webauthn_credentials`);
   `internal/assets/ygg-baseline.sql` is byte-identical to HRPAuth-Yggdrasil-API
-  `/home/lnb/Desktop/HA/HRPAuth-Yggdrasil-API/database/migrations/000001_init.up.sql`
+  `/home/lnb/Desktop/HA/hrpauth/HRPAuth-Yggdrasil-API/database/migrations/000001_init.up.sql`
   (`accounts`, `profiles`, `profile_properties`, `sessions`, `tokens`,
   `profile_keys`).
 - Generated INSERTs match columns: `internal/convert/convert.go::renderHASQL`
