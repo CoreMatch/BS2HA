@@ -43,7 +43,7 @@ BS2HA is a **one-shot, offline migration CLI**, not a resident service:
   `internal/bsdump/parse.go::createTablePattern`,
   `internal/bsdump/parse.go::insertPattern`; tables read
   `internal/convert/convert.go::Run`; username from
-  `users.nickname` `internal/app/app.go::runConvert`, `README.md:L36-L36 fp=627d7270 ~ - pass `--unsigned` only for non-production impo`.
+  `users.nickname` `internal/app/app.go::runConvert`, `README.md:L43-L43 fp=627d7270 ~ - pass `--unsigned` only for non-production impo`.
 - Outputs are files only: `internal/app/app.go::HAOutSQLPath`,
   `internal/app/app.go::YGGOutSQLPath`, `internal/app/app.go::OutReportPath`
   (write `HAOutSQLPath`, `YGGOutSQLPath`, `OutReportPath` JSON); report
@@ -54,6 +54,6 @@ BS2HA is a **one-shot, offline migration CLI**, not a resident service:
 - Delivery forms: CLI flags `internal/app/app.go::runConvert`,
   `README.md:L24-L30 fp=93f9bb29 ~ ./bs2ha convert \`; TUI auto-entry `internal/app/app.go::FillConfig`,
   `internal/tui/tui.go::FillConfig`; Docker multi-stage
-  `Dockerfile:L4-L10 fp=3a48e90f`, `Dockerfile:L16 fp=15b45c6c`, `Dockerfile:L20-L21 fp=7a3f9d61`.
+  `Dockerfile:L4-L10 fp=3a48e90f`, `Dockerfile:L17 fp=15b45c6c`, `Dockerfile:L21-L22 fp=7a3f9d61`.
 - Not verified: actual runtime behavior was not executed (read-only research);
   correctness is asserted from code reading.

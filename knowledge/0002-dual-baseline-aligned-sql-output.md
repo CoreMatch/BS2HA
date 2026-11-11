@@ -38,7 +38,7 @@ password reset.
 
 ## Evidence
 
-- Two output files and their destinations: `README.md:L38-L38 fp=99711c24 ~ - password method is detected from SQL; `BCRYPT`` ("split into
+- Two output files and their destinations: `README.md:L45-L45 fp=99711c24 ~ - password method is detected from SQL; `BCRYPT`` ("split into
   `ha-import.sql` for the core database and `ygg-import.sql` for the Yggdrasil
   database"); `docs/design.md:L54-L66 fp=f1920c96 ~ 1. HA Core 导入 SQL` (ha = Core `users`, ygg = Yggdrasil
   `accounts/profiles/profile_properties`).
