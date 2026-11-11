@@ -29,6 +29,13 @@ For advanced CLI usage:
   --ygg-out-sql ./ygg-import.sql
 ```
 
+## Docker image
+
+The image is published on Docker Hub: [`limeight/ha-bs2ha`](https://hub.docker.com/r/limeight/ha-bs2ha)
+(`linux/amd64` + `linux/arm64` multi-arch; tag `6232db3` alongside `latest`). BS2HA is a
+one-shot migration tool and is not part of the platform container orchestration; run it
+interactively against your Blessing-Skin-Server data.
+
 Notes:
 
 - copied HA texture files default to a `textures/` directory next to the
