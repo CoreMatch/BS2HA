@@ -27,13 +27,15 @@ For advanced CLI usage:
   --bs-textures ./storage/textures \
   --ha-callback-url https://auth.example.com \
   --ha-out-sql ./ha-import.sql \
-  --ygg-out-sql ./ygg-import.sql
+  --ygg-out-sql ./ygg-import.sql \
+  --out-report ./ha-import-report.json
 ```
 
 ## Docker image
 
 The image is published on Docker Hub: [`limeight/ha-bs2ha`](https://hub.docker.com/r/limeight/ha-bs2ha)
-(`linux/amd64` + `linux/arm64` multi-arch; tag `6232db3` alongside `latest`). BS2HA is a
+(`linux/amd64` + `linux/arm64` multi-arch; tag `1.3.0-f73e05e` alongside `latest`,
+manifest-list digest `sha256:d11b4ed61a20206abdcabc5ce8e2bba7de537394e49664c18165572e1a212f9b`). BS2HA is a
 one-shot migration tool and is not part of the platform container orchestration; run it
 interactively against your Blessing-Skin-Server data.
 
