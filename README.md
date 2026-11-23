@@ -9,6 +9,7 @@ Simply run the tool in your Blessing-Skin-Server root directory:
 
 ```bash
 go build -o bs2ha ./cmd/bs2ha
+./bs2ha --version
 ./bs2ha
 ```
 
