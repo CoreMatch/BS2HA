@@ -1,49 +1,32 @@
-# BS2HA
-Transform your Blessing-Skin-Server database to HRPAuth format.
+<div align="center">
+  <h1>BS2HA</h1>
+  <p><strong>Move from BlessingSkin with the details that matter.</strong></p>
+  <p><a href="./README.zh-CN.md">简体中文</a></p>
+</div>
 
-See [docs/design.md](./docs/design.md) for the current migration design.
+BS2HA is an offline migration tool that converts BlessingSkin SQL and texture data into HRPAuth core and Yggdrasil outputs through a guided TUI.
 
-## Usage
+It produces import files and a report for administrators planning a controlled migration.
 
-Simply run the tool in your Blessing-Skin-Server root directory:
+## Why BS2HA
 
-```bash
-go build -o bs2ha ./cmd/bs2ha
-./bs2ha --version
-./bs2ha
-```
+- **Guide the conversion.** Walk administrators through missing choices with a TUI.
+- **Sign textures securely.** Generate RSA-4096 keys and signed texture output.
+- **Preserve usable passwords.** Copy bcrypt hashes without rehashing.
+- **Produce both imports.** Emit separate core and Yggdrasil SQL outputs plus a migration report.
+- **Migrate offline.** Work directly from SQL dumps and texture files.
 
-The tool will automatically:
-- Release the HRPAuth baseline SQL templates (`ha-baseline.sql` and `ygg-baseline.sql`).
-- Detect your `bs.sql` and textures directory.
-- Guide you through the configuration via a TUI if any parameters are missing.
-- Auto-generate a new signing key if you don't provide one.
+## Learn more
 
-For advanced CLI usage:
+- [Migration design](docs/design.md) — local design reference
+- [Docker image](https://hub.docker.com/r/limeight/ha-bs2ha) — published container image
+- [HA Wiki](https://wiki.mcnb.dev/) — ecosystem documentation
+- [HA-Contract](https://github.com/CoreMatch/HA-Contract) — ecosystem API contracts
 
-```bash
-./bs2ha convert \
-  --bs-sql ./bs.sql \
-  --bs-textures ./storage/textures \
-  --ha-callback-url https://auth.example.com \
-  --ha-out-sql ./ha-import.sql \
-  --ygg-out-sql ./ygg-import.sql \
-  --out-report ./ha-import-report.json
-```
+## Migration limits
 
-## Docker image
+Sessions, tokens, and OAuth clients are excluded; non-bcrypt passwords require reset. Back up and test first—migration is never lossless.
 
-The image is published on Docker Hub: [`limeight/ha-bs2ha`](https://hub.docker.com/r/limeight/ha-bs2ha)
-(`linux/amd64` + `linux/arm64` multi-arch; tag `1.3.0-f73e05e` alongside `latest`,
-manifest-list digest `sha256:d11b4ed61a20206abdcabc5ce8e2bba7de537394e49664c18165572e1a212f9b`). BS2HA is a
-one-shot migration tool and is not part of the platform container orchestration; run it
-interactively against your Blessing-Skin-Server data.
+## License & provenance
 
-Notes:
-
-- copied HA texture files default to a `textures/` directory next to the
-  `--ha-out-sql` output when `--ha-textures-out` is omitted
-- pass `--unsigned` only for non-production imports without a signing key
-- the current BlessingSkin dump format uses `users.nickname` as the canonical source for `HA.users.username`
-- password method is detected from SQL; `BCRYPT` hashes are copied directly, other methods become `BS2HA$RESET_REQUIRED`
-- generated output is split into `ha-import.sql` for the core database and `ygg-import.sql` for the Yggdrasil database
+[AGPL-3.0](LICENSE). Source: [CoreMatch/BS2HA](https://github.com/CoreMatch/BS2HA).
