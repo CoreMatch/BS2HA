@@ -1,4 +1,4 @@
-# BS2HA 迁移工具设计说明
+# Armorial BS2HA Migration 设计说明
 
 ## 目标
 
@@ -6,10 +6,10 @@
 
 - 输入 BlessingSkin 的数据库 SQL dump
 - 输入 BlessingSkin 的 `textures/` 目录
-- 输出可导入 HRPAuth 的 SQL 文件
+- 输出可导入 Armorial 的 SQL 文件
 - 输出迁移报告
 
-目标是让迁移后的 HA 可以独立运行，不依赖旧 BS 继续在线。
+目标是让迁移后的 Armorial 可以独立运行，不依赖旧 BS 继续在线。
 
 ## 一期范围
 
@@ -31,11 +31,11 @@
 
 1. `--bs-sql <path>`：BlessingSkin SQL dump（默认：`./bs.sql`）
 2. `--bs-textures <path>`：BlessingSkin 材质目录（默认：`./storage/textures`，若不存在则跳过材质迁移）
-3. `--ha-callback-url <url>`：HRPAuth 回调基地址，用于生成 `textures.url`
-4. `--ha-private-key <path>`：HRPAuth 私钥文件路径
-5. `--ha-private-key-content <content>`：HRPAuth 私钥 PEM 内容（支持直接粘贴）
-6. `--ha-baseline-sql <path>`：HRPAuth Core 数据库模板文件（默认：`./ha-baseline.sql`，由程序内嵌并自动释放）
-7. `--ygg-baseline-sql <path>`：HRPAuth Yggdrasil 数据库模板文件（默认：`./ygg-baseline.sql`，由程序内嵌并自动释放）
+3. `--ha-callback-url <url>`：Armorial 回调基地址，用于生成 `textures.url`
+4. `--ha-private-key <path>`：Armorial 私钥文件路径
+5. `--ha-private-key-content <content>`：Armorial 私钥 PEM 内容（支持直接粘贴）
+6. `--ha-baseline-sql <path>`：Armorial Core 数据库模板文件（默认：`./ha-baseline.sql`，由程序内嵌并自动释放）
+7. `--ygg-baseline-sql <path>`：Armorial Yggdrasil 数据库模板文件（默认：`./ygg-baseline.sql`，由程序内嵌并自动释放）
 8. `--ha-out-sql <path>`：输出 Core SQL 文件路径
 9. `--ygg-out-sql <path>`：输出 Ygg SQL 文件路径
 10. `--out-report <path>`：输出报告文件路径
@@ -47,11 +47,11 @@
 - **高对比度显示**：适配各种终端配色方案。
 - **自动路径探测**：自动扫描当前目录下的 `bs.sql`、材质目录和密钥文件，并优先提示用户确认。
 - **自动密钥生成**：若用户未提供密钥，工具默认推荐并生成一个新的 RSA 4096 位私钥并保存。
-- **内嵌资源释放**：程序内嵌了标准的 HA 数据库模板，运行时自动释放到当前目录，实现“零配置”启动。
+- **内嵌资源释放**：程序内嵌了标准的 Armorial 数据库模板，运行时自动释放到当前目录，实现“零配置”启动。
 
 ## 输出物
 
-### 1. HA Core 导入 SQL
+### 1. Armorial Core 导入 SQL
 
 输出 Core 数据库所需的数据：
 
@@ -83,9 +83,9 @@
 
 ## 1. 用户映射
 
-BS `users.uid` 直接保留到 HA `users.uid`。
+BS `users.uid` 直接保留到 Armorial 的 `users.uid`。
 
-HA 新生成：
+Armorial 新生成：
 
 - `users.uuid`
 
@@ -111,7 +111,7 @@ HA 新生成：
 
 ## 2. “BS 用户名”落地规则
 
-`HA.users.username` 直接继承 BS 用户名。
+`users.username` 直接继承 BS 用户名。
 
 针对当前支持的 BlessingSkin SQL dump 结构，这个值来自 `users.nickname`。
 
@@ -124,7 +124,7 @@ HA 新生成：
 实现要求：
 
 1. 迁移器必须从 BS 输入中读取该用户的规范用户名；当前 dump 结构默认读取 `users.nickname`
-2. 该值直接写入 HA `users.username`
+2. 该值直接写入 Armorial 的 `users.username`
 3. 如果该用户缺失可恢复的 BS 用户名，该用户行应记入报告并按失败处理，而不是自动造名
 
 ## 3. 玩家到角色的映射
@@ -147,15 +147,15 @@ BS 的 `textures.hash` 与材质文件名天然对应，一期直接复用该哈
 
 迁移后：
 
-- 材质文件复制到 HA 的材质目录
+- 材质文件复制到 Armorial 的材质目录
 - `profile_properties.name = 'textures'`
 - `profile_properties.value` 写入 base64 的 Yggdrasil textures payload
-- payload 内的 URL 必须指向 HA 的 `/textures/{hash}`
+- payload 内的 URL 必须指向 Armorial 的 `/textures/{hash}`
 
 `profiles.model` 规则：
 
-- BS `steve` -> HA `default`
-- BS `alex` -> HA `slim`
+- BS `steve` -> `default`
+- BS `alex` -> `slim`
 - 没有皮肤 -> `default`
 
 ## 5. 密码策略
@@ -173,13 +173,13 @@ BS 的 `textures.hash` 与材质文件名天然对应，一期直接复用该哈
 
 这意味着：
 
-- 一期不需要 HA 支持 multi-crypt
+- 一期不需要 Armorial 支持 multi-crypt
 - 非 bcrypt 老用户迁移后不能直接沿用旧密码
-- `security.password_cost` 只约束 HA 新生成或重置后的 bcrypt 密码
+- `security.password_cost` 只约束 Armorial 新生成或重置后的 bcrypt 密码
 
 ## 6. 签名要求
 
-为了让迁移后的 Yggdrasil 资料立即可用，迁移工具应该使用 HA 私钥对 `textures` 属性签名。
+为了让迁移后的 Yggdrasil 资料立即可用，迁移工具应该使用 Armorial 私钥对 `textures` 属性签名。
 
 未提供私钥时，可以保留一个显式的“未签名模式”用于联调，但不应作为生产默认方案。
 
@@ -204,7 +204,7 @@ bs2ha convert \
 2. `staging`：构造成内部中间结构
 3. `mapper`：执行用户、角色、材质、密码映射规则
 4. `signer`：对 textures property 签名
-5. `emitter`：输出 HA / Ygg SQL
+5. `emitter`：输出 Armorial / Ygg SQL
 6. `reporter`：输出 JSON / Markdown 报告
 
 ## 当前边界

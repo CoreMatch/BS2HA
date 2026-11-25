@@ -13,7 +13,7 @@ accommodate this one.
 This knowledge base **does not define outward behavior**. BS2HA is a migration
 tool whose *target* schema is defined elsewhere: the HRPAuth core database
 baseline and the HRPAuth-Yggdrasil-API database baseline (and, for ecosystem
-outward behavior, [HA-Contract](https://github.com/CoreMatch/HA-Contract)). If
+outward behavior, [Armorial Contract](https://github.com/CoreMatch/HA-Contract)). If
 an entry here ever appears to contradict the target schema or a contract,
 **the target/contract wins and the entry is stale — fix the entry, never the
 target**, and surface the conflict to the owner.

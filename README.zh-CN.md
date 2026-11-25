@@ -1,14 +1,14 @@
 <div align="center">
-  <h1>BS2HA</h1>
+  <h1>Armorial BS2HA Migration</h1>
   <p><strong>从 BlessingSkin 迁移，让重要数据有据可查。</strong></p>
   <p><a href="./README.md">English</a></p>
 </div>
 
-BS2HA 是一款离线迁移工具，通过引导式 TUI 将 BlessingSkin 的 SQL 与纹理数据转换为 HRPAuth 核心和 Yggdrasil 产物。
+Armorial BS2HA Migration 是一款离线迁移工具，通过引导式 TUI 将 BlessingSkin 的 SQL 与纹理数据转换为 Armorial 核心和 Yggdrasil 产物。
 
 它为计划受控迁移的管理员生成导入文件与迁移报告。
 
-## 为什么选择 BS2HA
+## 为什么选择 Armorial BS2HA Migration
 
 - **引导式转换。** 通过 TUI 协助管理员完成缺失项选择。
 - **安全签名纹理。** 生成 RSA-4096 密钥与签名纹理产物。
@@ -20,8 +20,8 @@ BS2HA 是一款离线迁移工具，通过引导式 TUI 将 BlessingSkin 的 SQL
 
 - [迁移设计](docs/design.md) — 本地设计参考
 - [Docker 镜像](https://hub.docker.com/r/limeight/ha-bs2ha) — 已发布的容器镜像
-- [HA Wiki](https://wiki.mcnb.dev/) — 生态文档
-- [HA-Contract](https://github.com/CoreMatch/HA-Contract) — 生态 API 契约
+- [Armorial Wiki](https://wiki.mcnb.dev/) — 生态文档
+- [Armorial API Contracts](https://github.com/CoreMatch/HA-Contract) — 生态 API 契约
 
 ## 迁移限制
 

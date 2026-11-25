@@ -10,7 +10,7 @@ import (
 func main() {
 	const version = "1.3.0"
 	if len(os.Args) == 2 && (os.Args[1] == "--version" || os.Args[1] == "-v") {
-		fmt.Printf("BS2HA %s\n", version)
+		fmt.Printf("Armorial BS2HA Migration %s\n", version)
 		return
 	}
 

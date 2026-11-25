@@ -97,7 +97,7 @@ func FillConfig(cfg *convert.Config) error {
 		err := huh.NewForm(
 			huh.NewGroup(
 				huh.NewNote().
-					Title("BlessingSkin to HRPAuth Migration").
+					Title("Armorial BS2HA Migration").
 					Description("Welcome to the migration tool. Please fill in the missing parameters."),
 				huh.NewInput().
 					Title("BlessingSkin SQL Dump Path").
@@ -170,13 +170,13 @@ func FillConfig(cfg *convert.Config) error {
 		}
 	}
 
-	// 3. HA URL
+	// 3. Armorial URL
 	if haCallbackURL == "" {
 		err := huh.NewForm(
 			huh.NewGroup(
 				huh.NewInput().
-					Title("HRPAuth Callback URL").
-					Description("Base URL for HRPAuth (e.g., https://auth.example.com).").
+					Title("Armorial Callback URL").
+					Description("Base URL for Armorial (e.g., https://auth.example.com).").
 					Value(&haCallbackURL).
 					Validate(func(s string) error {
 						if s == "" {
@@ -219,8 +219,8 @@ func FillConfig(cfg *convert.Config) error {
 			err := huh.NewForm(
 				huh.NewGroup(
 					huh.NewSelect[string]().
-						Title("HRPAuth Private Key").
-						Description("A key is required to sign textures for HRPAuth.").
+						Title("Armorial Private Key").
+						Description("A key is required to sign textures for Armorial.").
 						Options(
 							huh.NewOption("Auto-generate New Key (Recommended)", "generate"),
 							huh.NewOption("Provide Manually (File Path or Paste)", "manual"),
@@ -305,7 +305,7 @@ func FillConfig(cfg *convert.Config) error {
 		err := huh.NewForm(
 			huh.NewGroup(
 				huh.NewInput().
-					Title("HRPAuth Baseline SQL").
+					Title("Armorial Baseline SQL").
 					Description("Leave empty for default (ha-baseline.sql).").
 					Placeholder("ha-baseline.sql").
 					Value(&haBaselineSQL).
@@ -319,7 +319,7 @@ func FillConfig(cfg *convert.Config) error {
 						return nil
 					}),
 				huh.NewInput().
-					Title("HRPAuth Yggdrasil Baseline SQL").
+					Title("Armorial Yggdrasil Baseline SQL").
 					Description("Leave empty for default (ygg-baseline.sql).").
 					Placeholder("ygg-baseline.sql").
 					Value(&yggBaselineSQL).
@@ -333,7 +333,7 @@ func FillConfig(cfg *convert.Config) error {
 						return nil
 					}),
 				huh.NewInput().
-					Title("Output HA SQL Path").
+					Title("Output Armorial SQL Path").
 					Placeholder("ha-import.sql").
 					Value(&haOutSQLPath),
 				huh.NewInput().

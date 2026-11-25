@@ -1,14 +1,14 @@
 <div align="center">
-  <h1>BS2HA</h1>
+  <h1>Armorial BS2HA Migration</h1>
   <p><strong>Move from BlessingSkin with the details that matter.</strong></p>
   <p><a href="./README.zh-CN.md">简体中文</a></p>
 </div>
 
-BS2HA is an offline migration tool that converts BlessingSkin SQL and texture data into HRPAuth core and Yggdrasil outputs through a guided TUI.
+Armorial BS2HA Migration is an offline migration tool that converts BlessingSkin SQL and texture data into Armorial core and Yggdrasil outputs through a guided TUI.
 
 It produces import files and a report for administrators planning a controlled migration.
 
-## Why BS2HA
+## Why Armorial BS2HA Migration
 
 - **Guide the conversion.** Walk administrators through missing choices with a TUI.
 - **Sign textures securely.** Generate RSA-4096 keys and signed texture output.
@@ -20,8 +20,8 @@ It produces import files and a report for administrators planning a controlled m
 
 - [Migration design](docs/design.md) — local design reference
 - [Docker image](https://hub.docker.com/r/limeight/ha-bs2ha) — published container image
-- [HA Wiki](https://wiki.mcnb.dev/) — ecosystem documentation
-- [HA-Contract](https://github.com/CoreMatch/HA-Contract) — ecosystem API contracts
+- [Armorial Wiki](https://wiki.mcnb.dev/) — ecosystem documentation
+- [Armorial API Contracts](https://github.com/CoreMatch/HA-Contract) — ecosystem API contracts
 
 ## Migration limits
 

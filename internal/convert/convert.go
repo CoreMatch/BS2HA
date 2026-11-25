@@ -32,7 +32,7 @@ type Config struct {
 	HAPrivateKeyPath      string
 	HAPrivateKeyContent   string
 	GeneratedKeyPath      string // Where to save the generated key
-	HABaselineSQLPath     string // Path to the baseline HA SQL file
+	HABaselineSQLPath     string // Path to the baseline Armorial SQL file
 	YGGBaselineSQLPath    string // Path to the baseline Ygg SQL file
 	HAOutSQLPath          string
 	YGGOutSQLPath         string
@@ -141,7 +141,7 @@ func Run(cfg Config, dump *bsdump.Dump) (*Result, error) {
 
 	callbackURL, err := url.Parse(cfg.HACallbackURL)
 	if err != nil || callbackURL.Scheme == "" || callbackURL.Host == "" {
-		return nil, fmt.Errorf("invalid HA callback URL %q", cfg.HACallbackURL)
+		return nil, fmt.Errorf("invalid Armorial callback URL %q", cfg.HACallbackURL)
 	}
 
 	method, err := detectPasswordMethod(dump)
@@ -529,7 +529,7 @@ func loadSigner(cfg Config) (signer, error) {
 	} else {
 		data, err = os.ReadFile(cfg.HAPrivateKeyPath)
 		if err != nil {
-			return signer{}, fmt.Errorf("read HA private key: %w", err)
+			return signer{}, fmt.Errorf("read Armorial private key: %w", err)
 		}
 	}
 	return parseKey(data)
@@ -565,8 +565,8 @@ func generateAndSaveKey(path string) (signer, error) {
 		return signer{}, fmt.Errorf("save generated key: %w", err)
 	}
 
-	fmt.Printf("\n[INFO] Generated new HRPAuth private key and saved to: %s\n", path)
-	fmt.Println("[IMPORTANT] Please keep this key safe and configure it in your HRPAuth server.")
+	fmt.Printf("\n[INFO] Generated new Armorial private key and saved to: %s\n", path)
+	fmt.Println("[IMPORTANT] Please keep this key safe and configure it in your Armorial server.")
 
 	return signer{key: key}, nil
 }
@@ -670,7 +670,7 @@ func looksLikeBcrypt(password string) bool {
 func renderHASQL(baselinePath string, users []userRecord) (string, error) {
 	sort.Slice(users, func(i, j int) bool { return users[i].UID < users[j].UID })
 
-	baseline, err := readBaselineSQL(baselinePath, "HA")
+	baseline, err := readBaselineSQL(baselinePath, "Armorial")
 	if err != nil {
 		return "", err
 	}
