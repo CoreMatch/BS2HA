@@ -1,7 +1,7 @@
 <div align="center">
   <h1>Armorial BS2HA Migration</h1>
   <p><strong>从 BlessingSkin 迁移，让重要数据有据可查。</strong></p>
-  <p><a href="./README.md">English</a></p>
+  <p><a href="./README.EN.md">English</a></p>
 </div>
 
 Armorial BS2HA Migration 是一款离线迁移工具，通过引导式 TUI 将 BlessingSkin 的 SQL 与纹理数据转换为 Armorial 核心和 Yggdrasil 产物。
